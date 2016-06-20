@@ -1,0 +1,199 @@
+<!doctype html>
+<html>
+    <head>
+        <meta charset="UTF-8" />
+        <title>Expeditions: Select symbol by name!</title>
+        <script src="//cdn.jsdelivr.net/phaser/2.4.8/phaser.min.js"></script>
+        <script type="text/javascript" src="http://cdn.robotwebtools.org/EventEmitter2/current/eventemitter2.min.js"></script>
+        <script type="text/javascript" src="http://cdn.robotwebtools.org/roslibjs/current/roslib.min.js"></script>
+        <style>
+        body{
+            width: 100%;
+            height: 100%;
+            padding: 0px;
+            margin: 0px;
+        }
+        </style>
+    </head>
+    <body>
+
+    <script type="text/javascript">
+
+    window.onload = function() {
+        var gameWidth = 1920;
+        var gameHeight = 1080;
+        var game = new Phaser.Game(window.innerWidth, window.innerHeight, Phaser.AUTO, '', { preload: preload, create: create});
+        var objects;
+        var box;
+        var target,attempts=1,stat=false;
+        var promptText, question;
+        var sx = window.innerWidth/gameWidth;
+        var sy = window.innerHeight/gameHeight;
+
+        var ros = new ROSLIB.Ros({
+            url : 'ws://localhost:9090'
+        });
+
+        var activity_status = new ROSLIB.Topic({
+            ros : ros,
+            name : '/activity_status',
+            messageType : 'comms/activity_status'
+        });
+
+        function preload () {
+
+            var path_to_assets='assets/';
+            game.load.image('logo', 'assets/Background/ShipInterior.png');
+            game.load.image('controlPanel',path_to_assets+'Items/ControlPanelcrop.png');
+
+            game.load.spritesheet('object1',path_to_assets+'Items/Planets/Jupiter_sheet.png',260,262,2);
+            game.load.spritesheet('object2',path_to_assets+'Items/Planets/Moon_sheet.png',428,428,2);
+            game.load.spritesheet('object3',path_to_assets+'Items/Planets/Saturn_sheet.png',826,289,2);
+            game.load.spritesheet('object4',path_to_assets+'Items/Planets/Neptune_sheet.png',428,428,2);
+
+            game.load.image('box',path_to_assets+'Items/BoxLong.png');
+
+            window.addEventListener('resize', function(event){resizeGame();});
+            var resizeGame = function () { game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;  game.scale.updateLayout();}
+
+            ros.on('connection', function() {
+                console.log('Connected to websocket server.');
+            });
+
+            ros.on('error', function(error) {
+                console.log('Error connecting to websocket server: ', error);
+            });
+
+            ros.on('close', function() {
+                console.log('Connection to websocket server closed.');
+            });
+        }
+
+        function create () {
+
+            var logo = game.add.sprite(game.world.centerX, game.world.centerY, 'logo');
+            logo.anchor.setTo(0.5, 0.5);
+            console.log('Game width is'+game.width);
+            console.log('Game height is'+game.height);
+
+            var controlPanel = game.add.sprite(0,0,'controlPanel');
+            controlPanel.scale.setTo(0.95*sx,0.95*sy);
+            controlPanel.x = game.world.centerX - controlPanel.width/2;
+            controlPanel.y = game.world.centerY - controlPanel.height/2;
+
+            box = game.add.sprite(0,0, 'box');
+            box.scale.setTo(0.95*sx,0.95*sy);
+            box.x = controlPanel.x + controlPanel.width/2 - box.width/2;
+            box.y = controlPanel.y + controlPanel.height/2 - box.height/2;
+            box.inputEnabled=true;
+
+            console.log('Box height is'+box.height);
+            console.log('Box width is'+box.width);
+
+            console.log('cp width and height are'+controlPanel.width+'x'+controlPanel.height);
+
+            objects=game.add.group();
+            var object1 = objects.create(box.x+20*sx+box.width/9*1,box.y+box.height/2,'object1');
+            var object2 = objects.create(box.x+20*sx+box.width/9*2.8,box.y+box.height/2,'object2');
+            var object3 = objects.create(box.x+20*sx+box.width/9*5.3,box.y+box.height/2,'object3');
+            var object4 = objects.create(box.x+20*sx+box.width/9*7.7,box.y+box.height/2,'object4');
+            object1.scale.setTo(0.96*sx);
+            object2.scale.setTo(0.576*sx);
+            object3.scale.setTo(0.78*sx);
+            object4.scale.setTo(0.576*sx);
+
+            objects.forEach(function(object){
+                object.anchor.setTo(0.5,0.5);
+                object.frame=0;
+                object.inputEnabled=true;
+                object.events.onInputDown.add(onInputDown,this);
+                object.events.onInputUp.add(onInputUp,this);
+            });
+
+            var arr = [0,1,2,3,4,5,6,7,8,9];
+            arr = shuffle(arr);
+            target = arr[0];
+            answer = game.rnd.integerInRange(1,4);
+            fontSize = 120*sx;
+
+            var num;
+            var count=1;
+            for (var i=1;i<=4;i++){
+                if (i==answer) num = game.add.text(objects.children[i-1].x,objects.children[i-1].y,target,{fontSize:fontSize+'px',fill:'#fff'});
+                else num = game.add.text(objects.children[i-1].x,objects.children[i-1].y,arr[count],{fontSize:fontSize+'px',fill:'#fff'});
+                count++;
+                num.anchor.setTo(0.5);
+            }
+    
+            promptText = game.add.text(game.width/2,0.03*game.height,'Choose the number six',{fontSize:'24px',fill:'#fff'});
+            question = 'Please choose the planet with number '+target;
+            promptText.setText(question);
+            promptText.x = game.width/2-promptText.width/2;
+
+            var start = new ROSLIB.Message({
+                header: {
+                    frame_id: '0'
+                },
+                message_type: "Activity Started",
+                activity_name: "Select symbol by name",
+                attempts: attempts,
+                target: target
+            });
+
+            activity_status.publish(start);
+
+        }
+
+        function onInputDown(sprite){
+            sprite.frame = 1;
+            stat = sprite.z==answer-1;
+
+            if (stat) {promptText.setText(question + ' - You win!'); promptText.x = game.width/2-promptText.width/2;}
+            if (!stat) attempts++;
+
+            var complete = new ROSLIB.Message({
+                header: {
+                    frame_id: '0'
+                },
+                message_type : "Activity Completed",
+                activity_name : "Select symbol by name",
+                target: target,
+                attempts: attempts,
+                status: stat
+            });
+
+            activity_status.publish(complete);
+        }
+        
+        function onInputUp(sprite){
+            sprite.frame = 0;
+        }
+
+        function render(){
+        
+        }
+
+        function reset(){
+
+        }
+
+        function shuffle(array) {
+            var currentIndex = array.length, temporaryValue, randomIndex;
+            // While there remain elements to shuffle...
+            while (0 !== currentIndex) {
+                // Pick a remaining element...
+                randomIndex = Math.floor(Math.random() * currentIndex);
+                currentIndex -= 1;
+                // And swap it with the current element.
+                temporaryValue = array[currentIndex];
+                array[currentIndex] = array[randomIndex];
+                array[randomIndex] = temporaryValue;
+            }
+            return array;
+        }
+    };
+
+    </script>
+
+    </body>
+</html>

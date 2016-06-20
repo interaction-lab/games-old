@@ -1,0 +1,20 @@
+To make the robot say stuff, publish:
+Topic: /DB1/Player/goal
+Message type: cordial_core/PlayerActionGoal
+Field: goal.phrase: 'hi t...'
+		goal.interrupt: true/false
+
+To make the robot do stuff, publish:
+Topic: /DB1/Behavior/goal
+Message type: cordial_core/BehaviorActionGoal
+Field: TODO
+
+To cancel anything, publish on:
+Topic: /DB1/Behavior(or Player or KeyframePlayer)/cancel
+Message type: actionlib_msgs/GoalID
+Field: #ID of the relevant action to be canceled
+
+Hopefully, you won't have to move the face as well. The visemes *should* be loaded automatically on getting messages to the relevant topic.
+Look at the topic names (-goal, +feedback/+result) for progress report and end report (success or not)
+
+The topic /CoRDial/robotsound should get messages on it when the robot is speaking something
