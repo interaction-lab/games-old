@@ -31,14 +31,21 @@
         var sx = window.innerWidth/gameWidth;
         var sy = window.innerHeight/gameHeight;
 
+        // Initializing ROS variables
         var ros = new ROSLIB.Ros({
-            url : 'ws://localhost:9090'
+            url : 'ws://'+location.hostname+':9090'
         });
 
         var activity_status = new ROSLIB.Topic({
             ros : ros,
             name : '/activity_status',
             messageType : 'comms/activity_status'
+        });
+
+        var robot_command = new ROSLIB.Topic({
+            ros : ros,
+            name : '/robot_command',
+            messageType : 'sar_robot_command_msgs/RobotCommand' 
         });
 
         function preload () {
@@ -56,17 +63,7 @@
             window.addEventListener('resize', function(event){resizeGame();});
             var resizeGame = function () { game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;  game.scale.updateLayout();}
 
-            ros.on('connection', function() {
-                console.log('Connected to websocket server.');
-            });
-
-            ros.on('error', function(error) {
-                console.log('Error connecting to websocket server: ', error);
-            });
-
-            ros.on('close', function() {
-                console.log('Connection to websocket server closed.');
-            });
+            ros_initialize();
 
         }
 
@@ -142,17 +139,7 @@
             promptText.setText(question);
             promptText.x = game.width/2-promptText.width/2;
 
-            var start = new ROSLIB.Message({
-                header: {
-                    frame_id: '0'
-                },
-                message_type: "Activity Started",
-                activity_name: "Compare two sets",
-                attempts: attempts,
-                target: target
-            });
-
-            activity_status.publish(start);
+            ros_activityStart();
 
         }
 
@@ -160,23 +147,12 @@
             sprite.frame = 1;
             if ((count1>count2 && lessmore == 2 && sprite == box1)||(count1>count2 && lessmore == 1 && sprite == box2)||(count1<count2 && lessmore == 2 && sprite == box2)||(count1<count2 && lessmore == 1 && sprite == box1)) {
                 stat = true;
-                alert('You are correct!');
             }
             else{
                 stat = false;
                 attempts++;
             }
-            var complete = new ROSLIB.Message({
-                header: {
-                    frame_id: '0'
-                },
-                message_type : "Activity Completed",
-                activity_name : "Compare two sets",
-                target: target,
-                attempts: attempts,
-                status: stat
-            });
-            activity_status.publish(complete);
+            ros_activityComplete();
         }
         
         function onInputUp(sprite){
@@ -204,6 +180,81 @@
                 array[randomIndex] = temporaryValue;
             }
             return array;
+        }
+
+        function ros_initialize(){
+            ros.on('connection', function() {
+                console.log('Connected to websocket server.');
+            });
+
+            ros.on('error', function(error) {
+                console.log('Error connecting to websocket server: ', error);
+            });
+
+            ros.on('close', function() {
+                console.log('Connection to websocket server closed.');
+            });
+        }
+
+        function ros_activityStart(){
+            var log_start = new ROSLIB.Message({
+                header: {
+                    frame_id: '0'
+                },
+                message_type: "Activity Started",
+                activity_name: "CompareSets",
+                attempts: attempts,
+                target: target
+            });
+            activity_status.publish(log_start);
+
+            var do_start = new ROSLIB.Message({
+                header: {
+                    frame_id: '1'
+                },
+                command: 2,
+                id: 'CompareSets_Intro_EN',
+                properties: 'I need to show my spaceship where to go. <question_face> Will yooou help me navigate?'
+            });
+            robot_command.publish(do_start);
+
+            if (lessmore==1) var temp='less';
+            else var temp='more';
+
+            do_start.id = 'CompareSets_'+temp+'_EN';
+            do_start.properties = 'Choose the galaxy that has '+temp+' stars.'
+            robot_command.publish(do_start);
+        }
+
+        function ros_activityComplete(){
+            var log_complete = new ROSLIB.Message({
+                header: {
+                    frame_id: '1'
+                },
+                message_type : "Activity Completed",
+                activity_name : "CompareSets",
+                target: target,
+                attempts: attempts,
+                status: stat
+            });
+            activity_status.publish(log_complete);
+
+            var do_complete = new ROSLIB.Message({
+                header: {
+                    frame_id: '1'
+                },
+                command: 2
+            });
+
+            if (stat){
+                do_complete.id = "Congrat_"+game.rnd.integerInRange(1,6)+"_EN";
+                do_complete.properties = "Great job!";
+            }
+            else {
+                do_complete.id = "is-right-1_EN";
+                do_complete.properties = "<question_face>Is that right?...";
+            }
+            robot_command.publish(do_complete);
         }
     };
 

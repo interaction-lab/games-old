@@ -29,15 +29,22 @@
         var target,attempts=1,stat=false;
         var sx = window.innerWidth/gameWidth;
         var sy = window.innerHeight/gameHeight;
-
+        
+        // Initializing ROS variables
         var ros = new ROSLIB.Ros({
-            url : 'ws://localhost:9090'
+            url : 'ws://'+location.hostname+':9090'
         });
 
         var activity_status = new ROSLIB.Topic({
             ros : ros,
             name : '/activity_status',
             messageType : 'comms/activity_status'
+        });
+
+        var robot_command = new ROSLIB.Topic({
+            ros : ros,
+            name : '/robot_command',
+            messageType : 'sar_robot_command_msgs/RobotCommand' 
         });
 
         function preload () {
@@ -60,19 +67,8 @@
             
             window.addEventListener('resize', function(event){resizeGame();});
             var resizeGame = function () {game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;  game.scale.updateLayout();}
-            //{ game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL; this.game.scale.setScreenSize(true);  game.stage.scale.refresh();}
 
-            ros.on('connection', function() {
-                console.log('Connected to websocket server.');
-            });
-
-            ros.on('error', function(error) {
-                console.log('Error connecting to websocket server: ', error);
-            });
-
-            ros.on('close', function() {
-                console.log('Connection to websocket server closed.');
-            });
+            ros_initialize();
 
         }
 
@@ -83,7 +79,6 @@
             console.log('Game height is'+game.height);
 
             target = game.math.snapToCeil(game.rnd.integerInRange(1,10),2,0);
-            //target = game.math.snapToCeil(10,2,0);
             
             button = game.add.sprite(0,0,'button');
             button.scale.setTo(0.4*sx);
@@ -128,17 +123,8 @@
                 //object.input.enableSnap(100,100,false,true);
             });
 
-            var start = new ROSLIB.Message({
-                header: {
-                    frame_id: '0'
-                },
-                message_type: "Activity Started",
-                activity_name: "Sort into halves",
-                attempts: attempts,
-                target: target
-            });
+            ros_activityStart();
 
-            activity_status.publish(start);
         }
 
         function outOfBox(sprite){
@@ -149,19 +135,8 @@
         function onButtonPress(sprite,pointer){
             sprite.frame=1;
             stat = countStars();
-            if (!stat) attempts++;
-            var complete = new ROSLIB.Message({
-                header: {
-                    frame_id: '0'
-                },
-                message_type : "Activity Completed",
-                activity_name : "Sort into halves",
-                target: target,
-                attempts: attempts,
-                status: stat
-            });
-
-            activity_status.publish(complete);
+            if (!stat[0]) attempts++;
+            ros_activityComplete();
         }
 
         function onButtonRelease(sprite,pointer){
@@ -198,14 +173,89 @@
                     count2++;
                 }
             });
-            if (count1==count2 && count1==target/2.0){ alert('Yayy!'); return true;}
-            else return false;
+            if (count1==count2 && count1==target/2.0){return [true,""];}
+            else{ 
+                return [false,(count1>count2)?"Uki":"Yana"];
+            }
         }
 
         function reset(){
 
         }
 
+        function ros_initialize(){
+            ros.on('connection', function() {
+                console.log('Connected to websocket server.');
+            });
+
+            ros.on('error', function(error) {
+                console.log('Error connecting to websocket server: ', error);
+            });
+
+            ros.on('close', function() {
+                console.log('Connection to websocket server closed.');
+            });
+        }
+
+        function ros_activityStart(){
+            var log_start = new ROSLIB.Message({
+                header: {
+                    frame_id: '0'
+                },
+                message_type: "Activity Started",
+                activity_name: "SortIntoHalves",
+                attempts: attempts,
+                target: target
+            });
+            activity_status.publish(log_start);
+
+            var do_start = new ROSLIB.Message({
+                header: {
+                    frame_id: '1'
+                },
+                command: 2,
+                id: 'HalfSet_Intro_EN',
+                properties: '<wakeup> Meet Uki and Yana, they’re my space pets! They eat stardust. Will you help me feed them? Feed Uki and Yana the same amount of stardust.'
+            });
+            robot_command.publish(do_start);
+        }
+
+        function ros_activityComplete(){
+            var log_complete = new ROSLIB.Message({
+                header: {
+                    frame_id: '1'
+                },
+                message_type : "Activity Completed",
+                activity_name : "SortIntoHalves",
+                target: target,
+                attempts: attempts,
+                status: stat[0]
+            });
+            activity_status.publish(log_complete);
+
+            var do_complete = new ROSLIB.Message({
+                header: {
+                    frame_id: '1'
+                },
+                command: 2
+            });
+
+            if (stat[0]){
+                do_complete.id = "Congrat_"+game.rnd.integerInRange(1,6)+"_EN";
+                do_complete.properties = "Great job!";
+            }
+            else {
+                if (stat[1] == 'Uki') {
+                    do_complete.id = "Uki-more_EN";
+                    do_complete.properties = "Uki has more than Yana. Feed them the same amount.";
+                }
+                else if (stat[1] == 'Yana') {
+                    do_complete.id = "Yana-more_EN";
+                    do_complete.properties = "Yana has more than Uki. Feed them the same amount.";
+                }
+            }
+            robot_command.publish(do_complete);
+        }
     };
 
     </script>

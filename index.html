@@ -32,9 +32,9 @@
         var sx = window.innerWidth/gameWidth;
         var sy = window.innerHeight/gameHeight;
 
+        // Initializing ROS variables
         var ros = new ROSLIB.Ros({
-            //url : 'ws://localhost:9090'
-            url : 'ws://192.168.7.191:9090'
+            url : 'ws://'+location.hostname+':9090'
         });
 
         var activity_status = new ROSLIB.Topic({
@@ -50,6 +50,8 @@
         });
 
         function preload () {
+            //This game is being built for a device with screen resolution of 1920x1080
+            //Effort is to ensure proper scaling down on all sprites etc.
 
             var path_to_assets='assets/';
             game.load.image('logo', 'assets/Background/ShipInterior.png');
@@ -62,51 +64,14 @@
             game.load.spritesheet('object5',path_to_assets+'Items/Rocks/Moonrock5_sheet.png',660,360,2);
             game.load.spritesheet('button',path_to_assets+'Items/Button_sheet.png',288,288,2);
             game.load.spritesheet('box',path_to_assets+'Items/Box_sheet.png',881,730,2);
-/*
-            game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
-            game.scale.updateLayout();
-*/
+
             window.addEventListener('resize', function(event){resizeGame();});
             var resizeGame = function () { game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;  game.scale.updateLayout();}
 
-            ros.on('connection', function() {
-                console.log('Connected to websocket server.');
-            });
-
-            ros.on('error', function(error) {
-                console.log('Error connecting to websocket server: ', error);
-            });
-
-            ros.on('close', function() {
-                console.log('Connection to websocket server closed.');
-            });
-
             target = game.rnd.integerInRange(1,10);
 
-            var log_start = new ROSLIB.Message({
-                header: {
-                    frame_id: '0'
-                },
-                message_type: "Activity Started",
-                activity_name: "MoveByName",
-                attempts: attempts,
-                target: target
-            });
-            activity_status.publish(log_start);
-
-            var do_start = new ROSLIB.Message({
-                header: {
-                    frame_id: '1'
-                },
-                command: 2,
-                id: 'MoveByName_Intro_EN',
-                properties: '<wakeup> I want to bring moon rocks home to show my friends. Will you help me pack some?'
-            });
-            robot_command.publish(do_start);
-
-            do_start.id = 'MoveByName_'+target+'_EN';
-            do_start.properties = 'Put '+target+' moon rocks into the box.';
-            robot_command.publish(do_start);
+            ros_initialize();
+            ros_activityStart();
         }
 
         function create () {
@@ -180,41 +145,7 @@
             sprite.frame=1;
             stat = countRocks();
             if (!stat[0]) attempts++;
-
-            var log_complete = new ROSLIB.Message({
-                header: {
-                    frame_id: '1'
-                },
-                message_type : "Activity Completed",
-                activity_name : "MoveByName",
-                target: target,
-                attempts: attempts,
-                status: stat[0]
-            });
-            activity_status.publish(log_complete);
-
-            var do_complete = new ROSLIB.Message({
-                header: {
-                    frame_id: '1'
-                },
-                command: 2
-            });
-
-            if (stat[0]){
-                do_complete.id = "Congrat_"+game.rnd.integerInRange(1,6)+"_EN";
-                do_complete.properties = "Great job!";
-            }
-            else {
-                if (stat[1] == 'less') {
-                    do_complete.id = "too-few-"+game.rnd.integerInRange(1,3)+"_EN";
-                    do_complete.properties = "Do we need more?";
-                }
-                else if (stat[1] == 'more') {
-                    do_complete.id = "too-many-"+game.rnd.integerInRange(1,3)+"_EN";
-                    do_complete.properties = "Is that too many?";
-                }
-            }
-            robot_command.publish(do_complete);
+            ros_activityComplete();            
         }
 
         function onButtonRelease(sprite,pointer){
@@ -274,6 +205,83 @@
             return array;
         }
 
+        function ros_initialize(){
+            ros.on('connection', function() {
+                console.log('Connected to websocket server.');
+            });
+
+            ros.on('error', function(error) {
+                console.log('Error connecting to websocket server: ', error);
+            });
+
+            ros.on('close', function() {
+                console.log('Connection to websocket server closed.');
+            });
+        }
+
+        function ros_activityStart(){
+            var log_start = new ROSLIB.Message({
+                header: {
+                    frame_id: '0'
+                },
+                message_type: "Activity Started",
+                activity_name: "MoveByName",
+                attempts: attempts,
+                target: target
+            });
+            activity_status.publish(log_start);
+
+            var do_start = new ROSLIB.Message({
+                header: {
+                    frame_id: '1'
+                },
+                command: 2,
+                id: 'MoveByName_Intro_EN',
+                properties: '<wakeup> I want to bring moon rocks home to show my friends. Will you help me pack some?'
+            });
+            robot_command.publish(do_start);
+
+            do_start.id = 'MoveByName_'+target+'_EN';
+            do_start.properties = 'Put '+target+' moon rocks into the box.';
+            robot_command.publish(do_start);
+        }
+
+        function ros_activityComplete(){
+            var log_complete = new ROSLIB.Message({
+                header: {
+                    frame_id: '1'
+                },
+                message_type : "Activity Completed",
+                activity_name : "MoveByName",
+                target: target,
+                attempts: attempts,
+                status: stat[0]
+            });
+            activity_status.publish(log_complete);
+
+            var do_complete = new ROSLIB.Message({
+                header: {
+                    frame_id: '1'
+                },
+                command: 2
+            });
+
+            if (stat[0]){
+                do_complete.id = "Congrat_"+game.rnd.integerInRange(1,6)+"_EN";
+                do_complete.properties = "Great job!";
+            }
+            else {
+                if (stat[1] == 'less') {
+                    do_complete.id = "too-few-"+game.rnd.integerInRange(1,3)+"_EN";
+                    do_complete.properties = "Do we need more?";
+                }
+                else if (stat[1] == 'more') {
+                    do_complete.id = "too-many-"+game.rnd.integerInRange(1,3)+"_EN";
+                    do_complete.properties = "Is that too many?";
+                }
+            }
+            robot_command.publish(do_complete);
+        }
     };
 
     </script>

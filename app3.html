@@ -30,14 +30,21 @@
         var sx = window.innerWidth/gameWidth;
         var sy = window.innerHeight/gameHeight;
 
+        // Initializing ROS variables
         var ros = new ROSLIB.Ros({
-            url : 'ws://localhost:9090'
+            url : 'ws://'+location.hostname+':9090'
         });
 
         var activity_status = new ROSLIB.Topic({
             ros : ros,
             name : '/activity_status',
             messageType : 'comms/activity_status'
+        });
+
+        var robot_command = new ROSLIB.Topic({
+            ros : ros,
+            name : '/robot_command',
+            messageType : 'sar_robot_command_msgs/RobotCommand' 
         });
 
         function preload () {
@@ -56,17 +63,7 @@
             window.addEventListener('resize', function(event){resizeGame();});
             var resizeGame = function () { game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;  game.scale.updateLayout();}
 
-            ros.on('connection', function() {
-                console.log('Connected to websocket server.');
-            });
-
-            ros.on('error', function(error) {
-                console.log('Error connecting to websocket server: ', error);
-            });
-
-            ros.on('close', function() {
-                console.log('Connection to websocket server closed.');
-            });
+            ros_initialize();
         }
 
         function create () {
@@ -129,19 +126,7 @@
             question = 'Please choose the planet with number '+target;
             promptText.setText(question);
             promptText.x = game.width/2-promptText.width/2;
-
-            var start = new ROSLIB.Message({
-                header: {
-                    frame_id: '0'
-                },
-                message_type: "Activity Started",
-                activity_name: "Select symbol by name",
-                attempts: attempts,
-                target: target
-            });
-
-            activity_status.publish(start);
-
+            ros_activityStart();
         }
 
         function onInputDown(sprite){
@@ -150,19 +135,7 @@
 
             if (stat) {promptText.setText(question + ' - You win!'); promptText.x = game.width/2-promptText.width/2;}
             if (!stat) attempts++;
-
-            var complete = new ROSLIB.Message({
-                header: {
-                    frame_id: '0'
-                },
-                message_type : "Activity Completed",
-                activity_name : "Select symbol by name",
-                target: target,
-                attempts: attempts,
-                status: stat
-            });
-
-            activity_status.publish(complete);
+            ros_activityComplete();
         }
         
         function onInputUp(sprite){
@@ -190,6 +163,78 @@
                 array[randomIndex] = temporaryValue;
             }
             return array;
+        }
+
+        function ros_initialize(){
+            ros.on('connection', function() {
+                console.log('Connected to websocket server.');
+            });
+
+            ros.on('error', function(error) {
+                console.log('Error connecting to websocket server: ', error);
+            });
+
+            ros.on('close', function() {
+                console.log('Connection to websocket server closed.');
+            });
+        }
+
+        function ros_activityStart(){
+            var log_start = new ROSLIB.Message({
+                header: {
+                    frame_id: '0'
+                },
+                message_type: "Activity Started",
+                activity_name: "SelectSymbolByName",
+                attempts: attempts,
+                target: target
+            });
+            activity_status.publish(log_start);
+
+            var do_start = new ROSLIB.Message({
+                header: {
+                    frame_id: '1'
+                },
+                command: 2,
+                id: 'SelectSymbolByName_Intro_EN',
+                properties: '<wakeup> I need to show my spaceship where to go. <question_face>Will yooou help me navigate?'
+            });
+            robot_command.publish(do_start);
+
+            do_start.id = 'SelectSymbolByName_'+target+'_EN'
+            do_start.properties = 'Choose the planet with the number '+target
+            robot_command.publish(do_start);
+        }
+
+        function ros_activityComplete(){
+            var log_complete = new ROSLIB.Message({
+                header: {
+                    frame_id: '1'
+                },
+                message_type : "Activity Completed",
+                activity_name : "SelectSymbolByName",
+                target: target,
+                attempts: attempts,
+                status: stat
+            });
+            activity_status.publish(log_complete);
+
+            var do_complete = new ROSLIB.Message({
+                header: {
+                    frame_id: '1'
+                },
+                command: 2
+            });
+
+            if (stat){
+                do_complete.id = "Congrat_"+game.rnd.integerInRange(1,6)+"_EN";
+                do_complete.properties = "Great job!";
+            }
+            else {
+                do_complete.id = "is-right-1_EN";
+                do_complete.properties = "<question_face>Is that right?...";
+            }
+            robot_command.publish(do_complete);
         }
     };
 
