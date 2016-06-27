@@ -108,6 +108,7 @@
             objects.forEach(function(object){
                 object.anchor.setTo(0.5,0.5);
                 object.scale.setTo(0.30*sx);
+                object.originalPosition = object.position.clone();
                 object.frame=0;
                 object.inputEnabled=true;
                 object.input.enableDrag(false,false,false,255,bounds,null);
@@ -142,14 +143,29 @@
             sprite.frame=0;
             spaceship.frame = 0;
             if (isInside(sprite) && isCorrect(sprite)) sprite.destroy();
-            else if (isInside(sprite)) {
+             
+         else if (isInside(sprite)) {
                 var num = sprite.getChildAt(0).text;
                 sprite.x = 0.1*game.width+((num-1)%4)*230*sx;
                 sprite.y = 150*sy+Math.floor((num-1)/4)*230*sy;
                 attempts++;
+                
+                
             }
+            
+            else if (!isInside(sprite)){
+            	objects.forEach(function(object){
+            		object.position.copyFrom(object.originalPosition);
+            	});
+            }
+            	
+         
             if (currentCount==target){
                 alert('Yayy!');
+		game.input.mouse.enabled = false;
+
+
+// Ros code
                 stat = true;
                 var complete = new ROSLIB.Message({
                     header: {
