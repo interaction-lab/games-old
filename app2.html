@@ -170,6 +170,14 @@
 
         function onDragStart(sprite,pointer){
             sprite.frame=1;
+            objects.forEach(function(object){ 
+           		if (! (isInside(object,box1) || isInside(object,box2)) )
+           		{
+           			object.position.copyFrom(object.originalPosition); 
+           		}
+           		
+           });
+
         }
 
         function onDragStop(sprite,pointer){
@@ -198,7 +206,12 @@
                     count2++;
                 }
             });
-            if (count1==count2 && count1==target/2.0){ alert('Yayy!'); return true;}
+            if (count1==count2 && count1==target/2.0){ 
+            
+            	alert('Yayy!');
+            	objects.forEach(function(object){object.input.draggable = false;});
+             	return true;
+             }
             else return false;
         }
 
