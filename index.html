@@ -18,12 +18,19 @@
     <body>
 
     <script type="text/javascript">
-
+	
+	const ROCK_AMOUNT = 10;
+	const COLUMNS_PANEL = 4;
+	const COLUMNS_BOX = 4;
+	
     window.onload = function() {
         var gameWidth = 1920;
         var gameHeight = 1080;
-        var game = new Phaser.Game(window.innerWidth, window.innerHeight, Phaser.AUTO, '', { preload: preload, create: create});
-        var objects;
+        var game = new Phaser.Game(window.innerWidth, window.innerHeight, Phaser.AUTO, '', { preload: preload, create: create, update:update});
+        
+		var rocks = new Array();
+		var onPanel;
+		var onBox;
         var box;
         var count=0;
         var scoreText;
@@ -31,6 +38,15 @@
         var target,attempts=1,stat=false;
         var sx = window.innerWidth/gameWidth;
         var sy = window.innerHeight/gameHeight;
+		var boxCoordX = new Array();
+		var boxCoordY = new Array();
+		var panelCoordX = new Array();
+		var panelCoordY = new Array();
+		var logo;
+		var controlPanel;
+		var button;
+		
+		console.log("sx: " + sx + " sy: " + sy);
 
         var ros = new ROSLIB.Ros({
             //url : 'ws://localhost:9090'
@@ -110,18 +126,18 @@
         }
 
         function create () {
-
-            var logo = game.add.sprite(game.world.centerX, game.world.centerY, 'logo');
+			//background image
+            logo = game.add.sprite(game.world.centerX, game.world.centerY, 'logo');
             logo.anchor.setTo(0.5, 0.5);
-            console.log('Game width is'+game.width);
-            console.log('Game height is'+game.height);
-
-            var controlPanel = game.add.sprite(0,0,'controlPanel');
+            //console.log('Game height is '+game.height);
+            //console.log('Game width is '+game.width);
+			
+            controlPanel = game.add.sprite(0,0,'controlPanel');
             controlPanel.scale.setTo(0.8*sx,0.8*sy);
             controlPanel.x = game.world.centerX - controlPanel.width/2;
             controlPanel.y = game.world.centerY - controlPanel.height/2;
 
-            var button = game.add.sprite(controlPanel.x+controlPanel.width/2,controlPanel.y+controlPanel.height-200,'button');
+            button = game.add.sprite(controlPanel.x+controlPanel.width/2,controlPanel.y+controlPanel.height-200,'button');
             button.scale.setTo(0.3);
             button.x = controlPanel.x+controlPanel.width/2-button.width/2;
             button.y = controlPanel.y+controlPanel.height-button.height-0.05*game.height;
@@ -137,30 +153,61 @@
             box.inputEnabled=true;
             box.frame = 0;
 
-            console.log('Box height is'+box.height);
-            console.log('Box width is'+box.width);
+            //console.log('Box height is '+box.height);
+            //console.log('Box width is '+box.width);
 
-            console.log('cp width and height are'+controlPanel.width+'x'+controlPanel.height);
+            //console.log('cp width x height are '+controlPanel.width+' x '+controlPanel.height);
 
-            objects=game.add.group();
-            var arr = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14];
-            arr = shuffle(arr);
-            for (var i=0;i<=9;i++){
+            //objects=game.add.group();
+			onPanel=game.add.group();
+			onBox=game.add.group();
+			
+            //arr = shuffle(arr);
+            for (var i=0;i<ROCK_AMOUNT;i++){
                 objectname = "object" + game.rnd.integerInRange(1,5);
-                var object = objects.create(controlPanel.x+220*sx+(arr[i]%4)*150*sx,controlPanel.y+130*sy+Math.floor(arr[i]/4)*150*sy,objectname);
+				panelCoordX[i] = controlPanel.x+220*sx+(i%COLUMNS_PANEL)*150*sx;
+				panelCoordY[i] = controlPanel.y+130*sy+Math.floor(i/COLUMNS_PANEL)*150*sy;				
+				//var object = 
+				//objects.create(panelCoordX[i], panelCoordY[i], objectname);
+				rocks[i] = game.add.sprite(panelCoordX[i], panelCoordY[i], objectname);
+				//objects.add(rocks[i]);
+				onPanel.add(rocks[i]);
+				console.log( "object" + i + " coordatineX : " + panelCoordX[i] + " rocks["+i+"].x: "+ rocks[i].x + " coordinateY : "+ panelCoordY[i] + " rocks["+i+"].y: "+ rocks[i].y+ " with "+ objectname + " image.");
             }
+			
+			console.log("01 onPanel.total: " + onPanel.total);
+			console.log("01 onBox.total: " + onBox.total);
 
-            objects.forEach(function(object){
-                object.anchor.setTo(0.5,0.5);
-                object.frame=0;
-                object.scale.setTo(0.25*sx);
-                object.inputEnabled=true;
-                object.input.enableDrag(false,false,false,255,null,controlPanel);
-                object.events.onDragStart.add(onDragStart,this);
-                object.events.onDragStop.add(onDragStop,this);
-                object.events.onDragUpdate.add(onDragUpdate,this);
+			boxCoordinates();
+			
+			// add the properties to the rocks
+            for(var i = 0; i < onPanel.total /* or const total rocks or 10 or something */; i++)
+			{
+				rocks[i].anchor.setTo(0.5,0.5);
+                rocks[i].frame=0;
+                rocks[i].scale.setTo(0.25*sx);
+                rocks[i].inputEnabled=true;
+                rocks[i].input.enableDrag(false,false,false,255,null,controlPanel);
+                rocks[i].events.onDragStart.add(onDragStart,this);
+                rocks[i].events.onDragStop.add(onDragStop,this);
+                rocks[i].events.onDragUpdate.add(onDragUpdate,this);
+			
+			console.log("02 onPanel.total: " + onPanel.total);
+			console.log("02 onBox.total: " + onBox.total);			
+			}
+			/* 			objects.forEach(function(item)
+			{
+                item.anchor.setTo(0.5,0.5);
+                item.frame=0;
+                item.scale.setTo(0.25*sx);
+                item.inputEnabled=true;
+                item.input.enableDrag(false,false,false,255,null,controlPanel);
+                item.events.onDragStart.add(onDragStart,this);
+                item.events.onDragStop.add(onDragStop,this);
+                item.events.onDragUpdate.add(onDragUpdate,this);
                 //object.input.enableSnap(100,100,false,true);
-            });
+				item.input.enableSnap(120*sx,120*sy,false,true);
+            }); */ 
 
             scoreText = game.add.text(game.width/2,0.1*game.height,'Count: 0',{fontSize:'24px',fill:'#000'});
             scoreText.x=game.width/2-scoreText.width/2;
@@ -171,6 +218,18 @@
             promptText.setText(question);
 
         }
+		
+	 	function update() {
+			
+		}
+		
+		function boxCoordinates() {
+			for (var i = 0; i < ROCK_AMOUNT; i++)
+			{
+				boxCoordX[i] = controlPanel.x + 960*sx + i%3*150*sx;
+				boxCoordY[i] = controlPanel.y + 160*sy + Math.floor(i/3)*100*sy;
+			}
+		}
 
         function outOfBox(sprite){
             sprite.loadTexture('box');
@@ -222,39 +281,100 @@
         }
 
         function onDragStart(sprite,pointer){
-            sprite.frame=1;
+			sprite.frame=1;
         }
 
         function onDragStop(sprite,pointer){
             sprite.frame=0;
             box.frame = 0;
+			
+			for (var i = 0; i < ROCK_AMOUNT; i++)
+			{				
+				if (isInside(rocks[i]) && onPanel.removeChild(rocks[i]))
+				{
+					onBox.add(rocks[i]);
+				}
+				else if (!isInside(rocks[i]) && onBox.removeChild(rocks[i]))
+				{
+					onPanel.add(rocks[i]);
+				}
+				console.log("onPanel.total: " + onPanel.total + " onBox.total: " + onBox.total);
+			}
+			
+			//Reorders the rocks on the Panel
+			for (var i = 0; i < onPanel.total; i++)
+			{
+				onPanel.getChildAt(i).x = panelCoordX[i];
+				onPanel.getChildAt(i).y = panelCoordY[i];
+			}
+			
+			//Reorders the rocks on the Box
+			for (var i = 0; i < onBox.total; i++)
+			{
+				onBox.getChildAt(i).x = boxCoordX[i];
+				onBox.getChildAt(i).y = boxCoordY[i];
+			}
         }
 
         function onDragUpdate(sprite,pointer){
-            if (isInside(sprite)) box.frame = 1;
-            else if (!isInside(sprite)) box.frame = 0;
+            if (isInside(sprite)) 
+			{
+				box.frame = 1;
+			}
+            else if (!isInside(sprite)) 
+			{
+				box.frame = 0;
+			}
+			
         }
 
         function render(){
         
         }
-
+		
+		/* function reorderRocks(){
+			if (isInside(sprite) && onPanel.removeChild.call(pointer)) 
+			{
+				console.log("in drag onBox.total: " + onBox.total);	
+				console.log("in drag onPanel.total: " + onPanel.total);
+				onBox.add(pointer);
+			}
+			else
+			{
+				//onBox.remove(pointer,false);
+				//onPanel.add(pointer);
+			}
+			//reorderRocks
+		} */
+		
         function isInside(object){
-            if (object.x>box.x+0.01*game.width && object.y>box.y+0.01*game.height && object.x<box.x+box.width-0.01*game.width && object.y<box.y+box.height-0.01*game.height) return true;
+            if (object.x>box.x+0.01*game.width && object.y>box.y+0.01*game.height && object.x<box.x+box.width-0.01*game.width && object.y<box.y+box.height-0.01*game.height) 
+				return true;
             else return false;
         }
 
         function countRocks(){
-            count = 0;
-            objects.forEach(function(object){
+            //count = 0;
+			count = onBox.total;
+			
+	/* 		onBox.forEach(function(object){
+            //objects.forEach(function(object){
                 if (isInside(object)){
                     console.log("Dropped inside the box!");
                     count++;
                 }
-            });
+            });  */
+			
             scoreText.setText('Count: '+count);
-            if (count==target){return [true, ""];}
-            else return [false,(count<target)?"less":"more"];
+			
+            if (count==target)
+			{
+				alert("yay");
+				game.input.mouse.enabled = false;
+				return [true, ""];
+			}
+			else 
+				return [false,(count<target)?"less":"more"];
         }
 
         function reset(){
