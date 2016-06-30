@@ -161,6 +161,7 @@
             if ((count1>count2 && lessmore == 2 && sprite == box1)||(count1>count2 && lessmore == 1 && sprite == box2)||(count1<count2 && lessmore == 2 && sprite == box2)||(count1<count2 && lessmore == 1 && sprite == box1)) {
                 stat = true;
                 alert('You are correct!');
+		game.input.mouse.enabled = false;
             }
             else{
                 stat = false;

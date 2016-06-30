@@ -24,7 +24,15 @@
         var gameHeight = 1080;
         var game = new Phaser.Game(window.innerWidth, window.innerHeight, Phaser.AUTO, '', { preload: preload, create: create});
         var objects;
-        var box;
+         var objects;
+        var boxGroupL;
+        var boxGroupR;
+        
+        var box1CoordX = new Array();
+	var box1CoordY = new Array();
+	var box2CoordX = new Array();
+	var box2CoordY = new Array();
+
         var count1=0,count2=0;
         var target,attempts=1,stat=false;
         var sx = window.innerWidth/gameWidth;
@@ -107,12 +115,18 @@
             box2.y = game.height/2-box2.height/2;
             box2.inputEnabled=true;
             box2.frame = 0;
-
+            
             objects=game.add.group();
+            boxGroupL = game.add.group();
+            boxGroupR = game.add.group();
+            
+            boxCoordinates(box1CoordX,box1CoordY, box1);
+            boxCoordinates(box2CoordX,box2CoordY, box2);
+            
             for (var i=1;i<=target;i++){
                 var name = "object"+(i%4+1);
                 console.log("Object number "+i+" object name "+name);
-                objects.create(game.world.centerX+Math.pow(-1,i%2)*75,0.1*game.height+Math.floor((i-1)/2)*100,name);
+                objects.create(game.world.centerX + Math.pow(-1,i%2)*75,0.1*game.height+Math.floor((i-1)/2)*100,name);
             }
 
             var bounds = new Phaser.Rectangle(0,0,logo.width,logo.height);
@@ -121,6 +135,7 @@
                 object.anchor.setTo(0.5,0.5);
                 object.frame=0;
                 object.scale.setTo(0.25*sx);
+                object.originalPosition = object.position.clone();
                 object.inputEnabled=true;
                 object.input.enableDrag(false,false,false,255,bounds,null);
                 object.events.onDragStart.add(onDragStart,this);
@@ -174,6 +189,51 @@
 
         function onDragStop(sprite,pointer){
             sprite.frame=0;
+                       	
+                       	if ( isInside(sprite,box1)  )
+           		{	
+					 boxGroupL.addChild(sprite);
+					 objects.removeChild(sprite);
+					 console.log("boxGroupL.total 1 =" + boxGroupL.total);
+					 console.log("boxGroupR.tota l =" + boxGroupR.total);
+					 console.log("objects.total 1 =" + objects.total);
+					 
+           		}
+           		else if ( isInside(sprite,box2)  )
+           		{
+					boxGroupR.addChild(sprite);
+					objects.removeChild(sprite);
+					
+					console.log("boxGroupL.total 2 =" + boxGroupL.total);
+					console.log("boxGroupR.total 2 =" + boxGroupR.total);
+					console.log("objects.total 2 =" + objects.total);
+				}
+			
+           		else if (! (isInside(sprite,box1) || isInside(sprite,box2)) )
+           		{
+					if(objects.countLiving()!== target)
+					{
+						objects.addChild(sprite);
+					}
+					
+           			sprite.position.copyFrom(sprite.originalPosition); 
+					
+					console.log("boxGroupL.total 3 =" + boxGroupL.total);
+					console.log("boxGroupR.total 3 ="  + boxGroupR.total);
+					console.log("objects.total 3 =" + objects.total);
+           		
+           		}
+           		
+           			for (var i = 0; i < boxGroupL.total; i++)
+				{
+					boxGroupL.getChildAt(i).x = box1CoordX[i];
+					boxGroupL.getChildAt(i).y = box1CoordY[i];
+				}
+           			for (var i = 0; i < boxGroupR.total; i++)
+				{
+					boxGroupR.getChildAt(i).x = box2CoordX[i];
+					boxGroupR.getChildAt(i).y = box2CoordY[i];
+				}
         }
 
         function render(){
@@ -181,13 +241,14 @@
         }
 
         function isInside(object,box){
-            if (object.x>box.x+0.01*game.width && object.y>box.y+0.01*game.height && object.x<box.x+box.width-0.01*game.width && object.y<box.y+box.height-0.01*game.height) return true;
+            if (object.x > box.x + 0.01*game.width && object.y > box.y + 0.01*game.height && object.x < box.x + box.width - 0.01*game.width && object.y < box.y + box.height - 0.01*game.height) return true;
             else return false;
         }
 
         function countStars(){
-            count1 = 0;
-            count2 = 0;
+            count1 = boxGroupL.total;
+            count2 = boxGroupR.total;
+/*
             objects.forEach(function(object){
                 if (isInside(object,box1)){
                     console.log("Dropped inside the box1!");
@@ -197,9 +258,26 @@
                     console.log("Dropped inside the box2!");
                     count2++;
                 }
+
             });
-            if (count1==count2 && count1==target/2.0){ alert('Yayy!'); return true;}
+            
+*/
+            if (count1==count2 && count1==target/2.0){ 
+		alert('Yayy!');
+		boxGroupL.forEach(function(object){object.input.draggable = false;});
+		boxGroupR.forEach(function(object){object.input.draggable = false;});
+		return true;
+		}
             else return false;
+        }
+        
+        
+        function boxCoordinates(boxArrayX,boxArrayY, box){
+        	for (var i =0; i< target; i++){
+        		
+        		boxArrayX[i] = box.x+100*sx+(i%3)*150*sx;
+        		boxArrayY[i] = box.y+ 70 *sy + Math.floor(i/3)*100*sy;
+        	}
         }
 
         function reset(){

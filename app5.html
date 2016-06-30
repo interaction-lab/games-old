@@ -18,19 +18,33 @@
     <body>
 
     <script type="text/javascript">
+    
+    const OBJECT_AMOUNT = 10;
+    const COLUMNS_PANEL = 4;
+    const COLUMNS_BATTERY = 4;
+
 
     window.onload = function() {
         var gameWidth = 1920;
         var gameHeight = 1080;
         var game = new Phaser.Game(window.innerWidth, window.innerHeight, Phaser.AUTO, '', { preload: preload, create: create});
         var objects;
+        var onPanel;
+        var onBattery;
         var box, battery;
         var count=0;
         var target,attempts=1,stat=false;
         var scoreText, promptText;
         var sx = window.innerWidth/gameWidth;
         var sy = window.innerHeight/gameHeight;
-
+        var batteryCoordX = new Array();
+        var batteryCoordY = new Array();
+        var panelCoordX = new Array();
+        var panelCoordY = new Array();
+        var logo;
+        var controlPanel;
+        var button;
+//ROS
         var ros = new ROSLIB.Ros({
             url : 'ws://localhost:9090'
         });
@@ -44,6 +58,8 @@
         function preload () {
 
             var path_to_assets='assets/';
+//logo means background image
+// controlPanel == frame box where crystals are located
             game.load.image('logo', 'assets/Background/ShipInterior.png');
             game.load.image('controlPanel',path_to_assets+'Items/ControlPanelcrop.png');
 
@@ -60,6 +76,7 @@
             game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
             game.scale.updateLayout();
 */
+//ROS
             window.addEventListener('resize', function(event){resizeGame();});
             var resizeGame = function () { game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;  game.scale.updateLayout();}
 
@@ -79,17 +96,17 @@
 
         function create () {
 
-            var logo = game.add.sprite(game.world.centerX, game.world.centerY, 'logo');
+            logo = game.add.sprite(game.world.centerX, game.world.centerY, 'logo');
             logo.anchor.setTo(0.5, 0.5);
             console.log('Game width is'+game.width);
             console.log('Game height is'+game.height);
 
-            var controlPanel = game.add.sprite(0,0,'controlPanel');
+            controlPanel = game.add.sprite(0,0,'controlPanel');
             controlPanel.scale.setTo(0.95*sx,0.95*sy);
             controlPanel.x = game.world.centerX - controlPanel.width/2;
             controlPanel.y = game.world.centerY - controlPanel.height/2;
 
-            var button = game.add.sprite(controlPanel.x+controlPanel.width/2,controlPanel.y+controlPanel.height-200,'button');
+            button = game.add.sprite(controlPanel.x+controlPanel.width/2,controlPanel.y+controlPanel.height-200,'button');
             button.scale.setTo(0.4*sx);
             button.scaleMin = 0.3;
             button.x = controlPanel.x+controlPanel.width/2-button.width/2;
@@ -116,15 +133,25 @@
 
             console.log('cp width and height are'+controlPanel.width+'x'+controlPanel.height);
 */
-            objects=game.add.group();
-            var arr = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14];
-            arr = shuffle(arr);
-            for (var i=0;i<=9;i++){
+            
+            onPanel=game.add.group();
+            onBattery=game.add.group();
+            
+            //var arr = [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14];
+            //arr = shuffle(arr);
+            for (var i=0;i<OBJECT_AMOUNT;i++){
                 objectname = "object" + game.rnd.integerInRange(1,5);
-                var object = objects.create(controlPanel.x+220*sx+(arr[i]%4)*150*sx,controlPanel.y+150*sy+Math.floor(arr[i]/4)*180*sy,objectname);
+                
+                //var object = objects.create(controlPanel.x+220*sx+(arr[i]%4)*150*sx,controlPanel.y+150*sy+Math.floor(arr[i]/4)*180*sy,objectname);
+                
+                panelCoordX[i] = controlPanel.x+220*sx+(i%COLUMNS_PANEL)*150*sx;
+                panelCoordY[i] = controlPanel.y+130*sy+Math.floor(i/COLUMNS_PANEL)*150*sy;
+                onPanel.addChild( onPanel.create(panelCoordX[i], panelCoordY[i], objectname) );
             }
+            
+            batteryCoordinates();
 
-            objects.forEach(function(object){
+            onPanel.forEach(function(object){
                 object.anchor.setTo(0.5,0.5);
                 object.frame=0;
                 object.scale.setTo(0.35*sx);
@@ -133,7 +160,7 @@
                 object.events.onDragStart.add(onDragStart,this);
                 object.events.onDragStop.add(onDragStop,this);
                 object.events.onDragUpdate.add(onDragUpdate,this);
-                object.input.enableSnap(100*sx,100*sy,false,true);
+                //object.input.enableSnap(100*sx,100*sy,false,true);
             });
 
             fontSize = 100*sx;
@@ -177,6 +204,14 @@
             });
             activity_status.publish(complete);
         }
+        
+        function batteryCoordinates() {
+        	for (var i = 0; i < OBJECT_AMOUNT; i++)
+        	{
+        		batteryCoordX[i] = controlPanel.x + 1205*sx + i%3*150*sx;
+        		batteryCoordY[i] = controlPanel.y + 300*sy + Math.floor(i/3)*145*sy;
+        	}
+	}
 
         function onButtonRelease(sprite,pointer){
             sprite.frame=0;
@@ -195,6 +230,29 @@
         function onDragStop(sprite,pointer){
             sprite.frame=0;
             battery.frame = 0;
+            			if (isInside(sprite) && onPanel.removeChild(sprite))
+				{
+					onBattery.add(sprite);
+				}
+				else if (!isInside(sprite) && onBattery.removeChild(sprite))
+				{
+					onPanel.add(sprite);
+				}
+				console.log("onPanel.total: " + onPanel.total + " onBox.total: " + onBattery.total);
+			
+			//Reorders the objects on the Panel
+			for (var i = 0; i < onPanel.total; i++)
+			{
+				onPanel.getChildAt(i).x = panelCoordX[i];
+				onPanel.getChildAt(i).y = panelCoordY[i];
+			}
+			
+			//Reorders the objects on the Battery
+			for (var i = 0; i < onBattery.total; i++)
+			{
+				onBattery.getChildAt(i).x = batteryCoordX[i];
+				onBattery.getChildAt(i).y = batteryCoordY[i];
+			}
         }
 
         function render(){
@@ -208,14 +266,20 @@
 
         function countCrystals(){
             count = 0;
-            objects.forEach(function(object){
+            onBattery.forEach(function(object){
                 if (isInside(object)){
                     console.log("Dropped inside the battery!");
                     count++;
                 }
             });
             scoreText.setText('Count: '+count);
-            if (count==target){ alert('Yayy!'); return true;}
+            if (count==target){ 
+		alert('Yayy!'); 
+		onBattery.forEach(function(object){ object.input.draggable = false;} );
+		onPanel.forEach(function(object){ object.input.draggable = false;} );
+		
+		return true;}
+
             else return false;
         }
 

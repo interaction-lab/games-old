@@ -162,7 +162,7 @@
          
             if (currentCount==target){
                 alert('Yayy!');
-		game.input.mouse.enabled = false;
+		objects.forEach(function(object){object.input.draggable = false;});
 
 
 // Ros code
