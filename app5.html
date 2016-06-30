@@ -146,7 +146,7 @@
                 
                 panelCoordX[i] = controlPanel.x+220*sx+(i%COLUMNS_PANEL)*150*sx;
                 panelCoordY[i] = controlPanel.y+130*sy+Math.floor(i/COLUMNS_PANEL)*150*sy;
-                onPanel.addChild( onPanel.create(panelCoordX[i], panelCoordY[i], objectname) );
+                onPanel.create(panelCoordX[i], panelCoordY[i], objectname);
             }
             
             batteryCoordinates();
