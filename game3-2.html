@@ -20,14 +20,6 @@
 	
 			<script type = "text/javascript">
 			
-				
-			/*if (window.innerWidth < 768 ||  window.innerHeight < 768 ){
-				
-				console.log("cant load the game");
-					
-			}
-				
-			*/
 			
 				window.onload = function(){
 					const ROCK_AMOUNT = 9;
@@ -53,14 +45,7 @@
 					var sy = window.innerHeight/gameHeight;
 					
 					var objectname = new Array();
-/*					
-					//string array with different color(in term of filename : 'object1')
-					var color = ['object2','object3', 'object4'];
-					//shuffle the color or shuffle the filename
-					shuffle(color);
-					
-*/
-					
+				
 					// create a color class-object array 
 					// Each color has its properties, crystalString and boxColor(String) that have the same color
 					var color =[ { crystalString: "object2", boxColor: "boxGreen"},
@@ -69,8 +54,6 @@
 									]
 					
 					shuffle(color);
-					
-					
 					
 					var box1CoordX = new Array();
 					var box1CoordY = new Array();
@@ -143,20 +126,14 @@
 						button.events.onInputDown.add(onButtonPress,this);
 						button.events.onInputUp.add(onButtonRelease,this);
 						
-
-						//setBoxColorStringName();
 						
 						box1 = game.add.sprite(0,0, color[0].boxColor);
 						// long box is used instead of small box 
 						box1.scale.setTo(0.45*sx,0.2*sy);
-						//console.log( 0.6*sx);
-						//console.log(0.25*sy);
 						//box1.anchor.setTo(0.5,0.5);
 						box1.x = controlPanel.x + controlPanel.width  - box1.width - 140*sx;
 						box1.y = controlPanel.y + controlPanel.height/3 - box1.height/3 - button.height - 50 *sx;
 						box1.frame = 0;
-						//game.physics.enable(box1, Phaser.Physics.ARCADE);
-						//box1.body.setSize(730, 881, 10, 5);
 						console.log('Box1 height is '+box1.height);
 						console.log('Box1 width is '+box1.width);
 						
@@ -178,9 +155,6 @@
 						console.log('Box2 height is '+box3.height);
 						console.log('Box2 width is '+box3.width);
 						
-						
-
-							
 						
 						
 						upperLHRock1= game.add.sprite(box1.x, box1.y, color[0].crystalString);
@@ -244,12 +218,8 @@
 							object.anchor.setTo(0.5,0.5);
 							object.frame=0;
 							object.scale.setTo(0.25*sx);
-							object.originalPosition = object.position.clone();
-							//object.alignIn(controlPanel, Phaser.BOTTOM_LEFT, -20, -20);
 							object.inputEnabled=true;
 							object.input.enableDrag(false,false,false,255,null,controlPanel);
-							//game.add.tween(object).to( { y: 400 }, 3000, Phaser.Easing.Cubic.InOut, true, 0, Number.MAX_VALUE, true);
-							//object.input.enableSnap(130 *sx,150 *sy,false,true);
 							object.events.onDragStart.add(onDragStart,this);
 							object.events.onDragStop.add(onDragStop,this);
 							object.events.onDragUpdate.add(onDragUpdate,this);
@@ -321,10 +291,6 @@
 						
 						console.log("onPanel.total: " + onPanel.total + " onBox1.total: " + onBox1.total + " onBox2.total: " + onBox2.total + " onBox3.total: " + onBox3.total);
 						
-						
-						//onBox1.align(5, -1, 50, 50);
-						//onBox1.x = controlPanel.x + box1.width + 350* sx;
-						//onBox1.y = box1.height + 50*sy;
 						
 						for (var i = 0; i < onPanel.total; i++)
 						{
@@ -400,35 +366,11 @@
 					
 					
 					function checkColor(){
-						
-							
-/*						onBox1.forEach(function(object){ 
-							
-							if(object.key !== 'object3'){
-							
-								console.log("fail");
-								return false;
-							}
-							else{
-								
-								console.log("you win");
-								return true;
-							
-							}
-
-							});
-							
-						
-					}
-						
-*/					
+										
 					
-						
 				
 						//count the Number of the Y/P/LB rocks in each box
 						for(var i = 0 ; i <onBox1.total ; i++){
-							//console.log(onBox1.getChildAt(i).key  );
-							//if( onBox1.getChildAt(i - 1 ).key === onBox1.getChildAt(onBox1.total - i).key ){
 							
 							if(onBox1.getChildAt(i).key == color[0].crystalString){
 								countBox1Color[0]++;
@@ -441,14 +383,6 @@
 								countBox1Color[2]++;
 							}
 
-							//if( onBox1.getChildAt(i).key !== 'object3'){
-							//	console.log("fail");
-							//	return false;
-							//}
-							//else {
-							//	console.log("you win");
-							//	return true;
-							//}
 			
 						}
 						
@@ -458,7 +392,6 @@
 						
 						
 						for(var i=0; i<onBox2.total ; i++){
-							//console.log(onBox2.getChildAt(i));
 							
 							if(onBox2.getChildAt(i).key == color[0].crystalString){
 								countBox2Color[0]++;
@@ -514,9 +447,6 @@
 						
 						}
 							
-							
-							
-						
 					
 				}
 				
@@ -557,11 +487,7 @@
 					return array;
 				}
 					
-
-				
-					
-					
-					
+	
 					function render(){
 
 					}

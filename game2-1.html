@@ -349,36 +349,11 @@
 					
 					function checkColor(){
 						
+														
 							
-/*						onBox1.forEach(function(object){ 
-							
-							if(object.key !== 'object3'){
-							
-								console.log("fail");
-								return false;
-							}
-							else{
-								
-								console.log("you win");
-								return true;
-							
-							}
-
-							});
-							
-						
-					}
-						
-*/					
-								
-				
-						
 						for(var i = 0 ; i <onBox1.total ; i++){
-							//console.log(onBox1.getChildAt(i).key  );
-							//if( onBox1.getChildAt(i - 1 ).key === onBox1.getChildAt(onBox1.total - i).key ){
-							
+					
 							if(onBox1.getChildAt(i).key == 'object3'){
-								//console.log("what the hell");
 								countBox1Color[0]++;
 							}
 							else if (onBox1.getChildAt(i).key == 'object4'){
@@ -389,14 +364,6 @@
 								countBox1Color[2]++;
 							}
 
-							//if( onBox1.getChildAt(i).key !== 'object3'){
-							//	console.log("fail");
-							//	return false;
-							//}
-							//else {
-							//	console.log("you win");
-							//	return true;
-							//}
 			
 						}
 						
@@ -506,8 +473,6 @@
 					
 
 				
-					
-					
 					
 					function render(){
 						

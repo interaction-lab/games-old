@@ -130,14 +130,10 @@
 						box1 = game.add.sprite(0,0, color[0].boxColor);
 						// long box is used instead of small box 
 						box1.scale.setTo(0.45*sx,0.2*sy);
-						//console.log( 0.6*sx);
-						//console.log(0.25*sy);
 						//box1.anchor.setTo(0.5,0.5);
 						box1.x = controlPanel.x + controlPanel.width  - box1.width - 140*sx;
 						box1.y = controlPanel.y + controlPanel.height/3 - box1.height/3 - button.height - 50 *sx;
 						box1.frame = 0;
-						//game.physics.enable(box1, Phaser.Physics.ARCADE);
-						//box1.body.setSize(730, 881, 10, 5);
 						console.log('Box1 height is '+box1.height);
 						console.log('Box1 width is '+box1.width);
 						
@@ -222,11 +218,8 @@
 							object.frame=0;
 							object.scale.setTo(0.25*sx);
 							object.originalPosition = object.position.clone();
-							//object.alignIn(controlPanel, Phaser.BOTTOM_LEFT, -20, -20);
 							object.inputEnabled=true;
 							object.input.enableDrag(false,false,false,255,null,controlPanel);
-							//game.add.tween(object).to( { y: 400 }, 3000, Phaser.Easing.Cubic.InOut, true, 0, Number.MAX_VALUE, true);
-							//object.input.enableSnap(130 *sx,150 *sy,false,true);
 							object.events.onDragStart.add(onDragStart,this);
 							object.events.onDragStop.add(onDragStop,this);
 							object.events.onDragUpdate.add(onDragUpdate,this);
@@ -377,34 +370,10 @@
 					
 					function checkColor(){
 						
+											
 							
-/*						onBox1.forEach(function(object){ 
-							
-							if(object.key !== 'object3'){
-							
-								console.log("fail");
-								return false;
-							}
-							else{
-								
-								console.log("you win");
-								return true;
-							
-							}
-
-							});
-							
-						
-					}
-						
-*/					
-					
-						
-				
-						//count the Number of the Y/P/LB rocks in each box
+						//count the Number of the Y/P/LB color rocks in each box
 						for(var i = 0 ; i <onBox1.total ; i++){
-							//console.log(onBox1.getChildAt(i).key  );
-							//if( onBox1.getChildAt(i - 1 ).key === onBox1.getChildAt(onBox1.total - i).key ){
 							
 							if(onBox1.getChildAt(i).key == color[0].rockString){
 								countBox1Color[0]++;
@@ -417,14 +386,6 @@
 								countBox1Color[2]++;
 							}
 
-							//if( onBox1.getChildAt(i).key !== 'object3'){
-							//	console.log("fail");
-							//	return false;
-							//}
-							//else {
-							//	console.log("you win");
-							//	return true;
-							//}
 			
 						}
 						
@@ -434,7 +395,6 @@
 						
 						
 						for(var i=0; i<onBox2.total ; i++){
-							//console.log(onBox2.getChildAt(i));
 							
 							if(onBox2.getChildAt(i).key == color[0].rockString){
 								countBox2Color[0]++;
@@ -487,10 +447,7 @@
 							alert("Incorrect");
 							console.log("You have tried "+ attempt + " times.");
 						}
-							
-							
-						
-					
+								
 				}
 				
 				function resetColorCount(){
