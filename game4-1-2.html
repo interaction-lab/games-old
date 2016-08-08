@@ -134,7 +134,7 @@
 						
 						/*
 						box1/3/5/7 are used to set the sequence
-						box2/4/6/8 are used to create the empty box on the top of blue rectangle box
+						box2/4/6/8 are used to create the empty box on the blue rectangle box
 						*/
 						
 						box1 = game.add.sprite(0,0, 'box');
@@ -510,6 +510,7 @@
 							onBox8.getChildAt(i).x =  box8.x + box8.width/2;
 							onBox8.getChildAt(i).y = box8.y + box8.height/2;
 						}
+						
 	
 					}
 					
@@ -732,7 +733,15 @@
 					
 				function checkSequence(){
 						
-						if (onBox1.children[0].key == onBox2.children[0].key &&
+						//if the box are empty, display incorrect message 
+						//avoid the case for children[0] being undefined whenever there is an empty box
+						if(onBox2.children[0] == null || onBox4.children[0] == null || onBox6.children[0] == null || onBox8.children[0] == null){
+							attempt++;
+							alert("Incorrect, please fill in the empty box");
+							console.log("You have tried "+ attempt + " times.");
+						}
+						
+						else if (onBox1.children[0].key == onBox2.children[0].key &&
 							onBox3.children[0].key == onBox4.children[0].key &&
 							onBox5.children[0].key == onBox6.children[0].key &&
 							onBox7.children[0].key == onBox8.children[0].key )
@@ -744,7 +753,7 @@
 						else{
 							
 							attempt++;
-							alert("Incorrect");
+							alert("Incorrect, wrong sequence");
 							console.log("You have tried "+ attempt + " times.");
 						}
 						
