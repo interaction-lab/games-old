@@ -64,7 +64,7 @@
 					var countBox3Color = [0,0,0];
 
 					//keep track of the color count after rocks are generated for the first time
-					//It can be represented as the box color as well
+					// it is used to compare the number of same color rocks in the box
 					var numColor1 =0;//yellow
 					var numColor2 =0;//purple
 					var numColor3 =0;// Light Blue
@@ -148,7 +148,8 @@
 						onBox2 = game.add.group();
 						onBox3 = game.add.group();
 						
-						//set the objectname to the string filename and shuffle them
+						//set a string array called objectname and shuffle them
+						//it is used to generate/ create rock on panel
 						for (var i=0; i< SAME_COLOR_AMOUNT ; i++){
 							objectname[i] = "object2";
 							objectname[i+3] = "object3";
@@ -274,6 +275,7 @@
 						//onBox1.x = controlPanel.x + box1.width + 350* sx;
 						//onBox1.y = box1.height + 50*sy;
 						
+						//arrange the rocks in each group
 						for (var i = 0; i < onPanel.total; i++)
 						{
 							onPanel.getChildAt(i).x = panelCoordX[i];
@@ -347,36 +349,9 @@
 					}
 					
 					function checkColor(){
-						
-							
-/*						onBox1.forEach(function(object){ 
-							
-							if(object.key !== 'object3'){
-							
-								console.log("fail");
-								return false;
-							}
-							else{
-								
-								console.log("you win");
-								return true;
-							
-							}
-
-							});
-							
-						
-					}
-						
-*/					
-					
-						
-				
-						
+												
 						for(var i = 0 ; i <onBox1.total ; i++){
-							//console.log(onBox1.getChildAt(i).key  );
-							//if( onBox1.getChildAt(i - 1 ).key === onBox1.getChildAt(onBox1.total - i).key ){
-							
+						
 							if(onBox1.getChildAt(i).key == 'object3'){
 								countBox1Color[0]++;
 							}
@@ -387,15 +362,6 @@
 							else if (onBox1.getChildAt(i).key == 'object5'){
 								countBox1Color[2]++;
 							}
-
-							//if( onBox1.getChildAt(i).key !== 'object3'){
-							//	console.log("fail");
-							//	return false;
-							//}
-							//else {
-							//	console.log("you win");
-							//	return true;
-							//}
 			
 						}
 						
@@ -404,7 +370,6 @@
 						console.log( "box1Color [2] ==>Purple :" + countBox1Color[2]);
 			
 						for(var i=0; i<onBox2.total ; i++){
-							//console.log(onBox2.getChildAt(i));
 						
 							if(onBox2.getChildAt(i).key == 'object3'){
 								countBox2Color[0]++;

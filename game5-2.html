@@ -25,7 +25,6 @@
 				window.onload = function(){
 					const OBJECT_AMOUNT = 10;
 					const COLUMNS_PANEL = 5;
-					const SEQUENCE_AMOUNT =6;
 					
 					var gameWidth = 1920;
 					var gameHeight = 1080;
@@ -48,18 +47,19 @@
 					var sx = window.innerWidth/gameWidth;
 					var sy = window.innerHeight/gameHeight;
 					
-					//set the objectname to the string filename and shuffle them
+					//set a string array called objectname and shuffle them
 					// tempObj is randomize
 					var tempObj1 = "object" + game.rnd.integerInRange(1,2);
 					var tempObj2 = "object" + game.rnd.integerInRange(3,4);
 					var tempObj3 = "object" + game.rnd.integerInRange(5,6);
 					var tempObj4 = "object" + game.rnd.integerInRange(1,6); 
 					
-					var sequenceObj = [tempObj1,tempObj2, tempObj3];
-					shuffle(sequenceObj);
-					
 					var objectname  =  ['object1', 'object2', 'object3', 'object4' , 'object5', 'object6', tempObj1, tempObj2, tempObj3, tempObj4];
 					shuffle(objectname);
+					
+					//set up a sequence array
+					var sequenceObj = [tempObj1,tempObj2, tempObj3];
+					shuffle(sequenceObj);
 
 /*					
 					var objectBox= new Array();
@@ -230,7 +230,7 @@
 //						boxCoordinates(box1CoordX, box1CoordY,box1);
 //						boxCoordinates(box2CoordX, box2CoordY,box2);						
 
-
+							//create the sequence/pattern on box1/2/3/4
 							onBox1.create(box1.x + box1.width/2 , box1.y + box1.height/2 , sequenceObj[0]);
 							onBox2.create(box2.x +box2.width/2  , box2.y + box2.height/2 , sequenceObj[1]);
 							onBox3.create(box3.x +box3.width/2  , box3.y + box3.height/2 , sequenceObj[0]);
@@ -342,7 +342,8 @@
 						}
 						else if(onBox5.total == 1 && isInside(sprite, box5)  ){
 						
-							// if  something is dragged into box, swap them
+							// if something is dragged into box, check the condition and swap them
+							// otherwise set it back to the its location
 							swapWithBox5 (sprite, onBox5.getChildAt(0) ) ;
 							console.log("swap with Box5");	
 							
@@ -372,6 +373,8 @@
 						}
 						else if( onBox6.total ==1 && isInside(sprite,box6) ){
 							
+							// if something is dragged into box, check the condition and swap them
+							// otherwise set it back to the its location
 							swapWithBox6( sprite, onBox6.getChildAt(0) )
 							console.log("swap with Box6");
 						
@@ -391,6 +394,7 @@
 						console.log("onPanel.total: " + onPanel.total );  //+ " onBox1.total : " + onBox1.total + " onBox3.total : " + onBox3.total + "onBox5.total : " + onBox5.total + "onBox7.total : "+ onBox7.total);
 						console.log("onBox5.total : " + onBox5.total + " onBox6.total: " + onBox6.total );
 						
+						//set the position of objects in thier corresponding box / panel
 						for (var i = 0; i < onPanel.total; i++)
 						{
 							onPanel.getChildAt(i).x = panelCoordX[i];
@@ -419,24 +423,24 @@
 						if (isInside(sprite,box5)){
 							
 							box5.frame = 1;
-							//console.log("Drag the sprite. Overlapping8: true");
+							//console.log("Drag the sprite. Overlapping5: true");
 						}
 						
 						else if (!isInside(sprite,box5)){
 							box5.frame = 0;
-							//console.log( "Drag the sprite. Overlapping8: false");
+							//console.log( "Drag the sprite. Overlapping5: false");
 						}
 						
 
 						if (isInside(sprite,box6)){
 							
 							box6.frame = 1;
-							//console.log("Drag the sprite. Overlapping8: true");
+							//console.log("Drag the sprite. Overlapping6: true");
 						}
 						
 						else if (!isInside(sprite,box6)){
 							box6.frame = 0;
-							//console.log( "Drag the sprite. Overlapping8: false");
+							//console.log( "Drag the sprite. Overlapping6: false");
 						}
 						
 
@@ -446,7 +450,10 @@
 					}
 					
 					function swapWithBox5 (sprite, spriteInBox5 ){
-						
+							
+							//if the sprite can be remove from onpanel group
+							// add the sprite to box5 and add spriteInbox5 to onpanel 
+							// remove the first child in box5
 							if (  onPanel.removeChild(sprite)  ){
 						
 								onBox5.addChild(sprite);

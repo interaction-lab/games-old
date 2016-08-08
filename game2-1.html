@@ -64,7 +64,6 @@
 
 					//keep track of the color count after rocks are generated for the first time
 					// it is used to compare the number of same color rocks in the box
-					//color is randomize
 					var numColor1 =0;//orange 
 					var numColor2 =0;//Pink
 					var numColor3 =0;// Light Blue
@@ -115,14 +114,10 @@
 						
 						box1 = game.add.sprite(0,0, 'box');
 						box1.scale.setTo(0.8*sx,0.15*sy);
-						//console.log( 0.6*sx);
-						//console.log(0.25*sy);
 						//box1.anchor.setTo(0.5,0.5);
 						box1.x = controlPanel.x + controlPanel.width  - box1.width - 140*sx;
 						box1.y = controlPanel.y + controlPanel.height/3 - box1.height/3 - button.height - 50 *sx;
 						box1.frame = 0;
-						//game.physics.enable(box1, Phaser.Physics.ARCADE);
-						//box1.body.setSize(730, 881, 10, 5);
 						console.log('Box1 height is '+box1.height);
 						console.log('Box1 width is '+box1.width);
 						
@@ -144,12 +139,14 @@
 						console.log('Box2 height is '+box3.height);
 						console.log('Box2 width is '+box3.width);
 						
+						//create groups of objects
 						onPanel = game.add.group();
 						onBox1 = game.add.group();
 						onBox2 = game.add.group();
 						onBox3 = game.add.group();
 						
-						//set the objectname to the string filename and shuffle them
+						//set a string array called objectname and shuffle them
+						//it is used to generate/ create rock on panel
 						for (var i=0; i< SAME_COLOR_AMOUNT ; i++){
 							objectname[i] = "object3";
 							objectname[i+3] = "object4";
@@ -167,11 +164,12 @@
 							onPanel.create(panelCoordX[i], panelCoordY[i], objectname[i]);
 						}
 						
-						//Set those coordinate to array
+						//Set these coordinates to array
 						boxCoordinates(box1CoordX, box1CoordY,box1);
 						boxCoordinates(box2CoordX, box2CoordY,box2);
 						boxCoordinates(box3CoordX, box3CoordY,box3);
 						
+						// count the number of color
 						for (var i=0; i<onPanel.total ; i++){
 						
 							switch (onPanel.getChildAt(i).key){
@@ -189,17 +187,14 @@
 							}
 						}
 
-						
+						// set anchor/ scale/ enable input for all object in "onPanel" group
 						onPanel.forEach(function(object){
 							object.anchor.setTo(0.5,0.5);
 							object.frame=0;
 							object.scale.setTo(0.25*sx);
-							object.originalPosition = object.position.clone();
-							//object.alignIn(controlPanel, Phaser.BOTTOM_LEFT, -20, -20);
+							//object.originalPosition = object.position.clone();
 							object.inputEnabled=true;
 							object.input.enableDrag(false,false,false,255,null,controlPanel);
-							//game.add.tween(object).to( { y: 400 }, 3000, Phaser.Easing.Cubic.InOut, true, 0, Number.MAX_VALUE, true);
-							//object.input.enableSnap(130 *sx,150 *sy,false,true);
 							object.events.onDragStart.add(onDragStart,this);
 							object.events.onDragStop.add(onDragStop,this);
 							object.events.onDragUpdate.add(onDragUpdate,this);
@@ -207,7 +202,7 @@
 						
 						});
 						
-						//Number of color generated on the panel
+						//log the number of color generated on the panel
 						console.log(numColor1);
 						console.log(numColor2);
 						console.log(numColor3);
@@ -241,9 +236,11 @@
 						box2.frame = 0;
 						box3.frame = 0;
 						sprite.frame = 0;
-						
+
+						//if the number of rocks in box is less than 4 and the rock is dragged into the box1 and the rock can be removed from panel/box2/box3
 						if ( onBox1.total <4 && isInside(sprite,box1) && (onPanel.removeChild(sprite) || onBox2.removeChild(sprite) || onBox3.removeChild(sprite)) )
 						{
+							//add sprite into onbox1 group
 							onBox1.add(sprite);
 						}
 						else if (!isInside(sprite,box1) && onBox1.removeChild(sprite))
@@ -268,13 +265,11 @@
 							onPanel.add(sprite);
 						}
 						
+						//log the total number of rocks in each group
 						console.log("onPanel.total: " + onPanel.total + " onBox1.total: " + onBox1.total + " onBox2.total: " + onBox2.total + " onBox3.total: " + onBox3.total);
 						
 						
-						//onBox1.align(5, -1, 50, 50);
-						//onBox1.x = controlPanel.x + box1.width + 350* sx;
-						//onBox1.y = box1.height + 50*sy;
-						
+						//arrange the rocks in each group
 						for (var i = 0; i < onPanel.total; i++)
 						{
 							onPanel.getChildAt(i).x = panelCoordX[i];
@@ -333,14 +328,6 @@
 						}
 									
 					}
-/*					function checkOverlap(spriteA, spriteB) {
-
-						var boundsA = spriteA.getBounds();
-						var boundsB = spriteB.getBounds();
-
-						return Phaser.Rectangle.intersects(boundsA, boundsB);
-					}
-*/
 
 					function isInside(object,box){
 						if (object.x>box.x+0.01*game.width && object.y>box.y+0.01*game.height && object.x<box.x+box.width-0.01*game.width && object.y<box.y+box.height-0.01*game.height) return true;
@@ -349,8 +336,7 @@
 					
 					function checkColor(){
 						
-														
-							
+						//keep track of each color rocks in box1/2/3
 						for(var i = 0 ; i <onBox1.total ; i++){
 					
 							if(onBox1.getChildAt(i).key == 'object3'){
@@ -409,7 +395,7 @@
 						console.log( "box3Color [1] ==>p :" + countBox3Color[1]);
 						console.log( "box3Color [2] ==>LB :" + countBox3Color[2]);
 						
-						
+						// check if these conditions satisfy
 						if 	(	(numColor1 == countBox1Color[0] || numColor1 == countBox2Color[0] || numColor1 == countBox3Color[0]) && 
 								(numColor2 == countBox1Color[1] || numColor2 == countBox2Color[1] || numColor2 == countBox3Color[1]) &&
 								(numColor3 == countBox1Color[2] || numColor3 == countBox2Color[2] || numColor3 == countBox3Color[2]) &&
@@ -433,6 +419,7 @@
 					
 				}
 				
+				//reset the color count
 				function resetColorCount(){
 
 					
@@ -450,6 +437,7 @@
 					}
 				}
 				
+				//set the allignment of rocks in box
 				function boxCoordinates(boxArrayX,boxArrayY, box){
 					for (var i =0; i< ROCK_AMOUNT; i++){
 						

@@ -25,7 +25,6 @@
 				window.onload = function(){
 					const OBJECT_AMOUNT = 10;
 					const COLUMNS_PANEL = 5;
-					const SEQUENCE_AMOUNT =6;
 					
 					var gameWidth = 1920;
 					var gameHeight = 1080;
@@ -48,17 +47,18 @@
 					var sx = window.innerWidth/gameWidth;
 					var sy = window.innerHeight/gameHeight;
 					
-					//set the objectname to the string filename and shuffle them
+					//set a string array called objectname and shuffle them
 					// tempObj is randomize
 					var tempObj1 = "object" + game.rnd.integerInRange(1,2);
 					var tempObj2 = "object" + game.rnd.integerInRange(3,4);
 					var tempObj3 = "object" + game.rnd.integerInRange(5,6);
 					var tempObj4 = "object" + game.rnd.integerInRange(1,6);
 					
-					var sequenceObj = "object" + game.rnd.integerInRange(1,6);
-					
 					var objectname  =  ['object1', 'object2', 'object3', 'object4' , 'object5', 'object6', tempObj1, tempObj2, tempObj3, tempObj4];
 					shuffle(objectname);
+					
+					//set up a sequence array
+					var sequenceObj = "object" + game.rnd.integerInRange(1,6);
 					
 					
 /*					var box1CoordX = new Array();
@@ -70,8 +70,6 @@
 					var panelCoordY = new Array();
 					
 
-					
-					
 					function preload(){
 					
 						var path_to_assets='assets/';
@@ -130,9 +128,7 @@
 						button.events.onInputDown.add(onButtonPress,this);
 						button.events.onInputUp.add(onButtonRelease,this);
 						
-						
 
-						
 						
 						box1 = game.add.sprite(0,0, 'box');
 						box1.scale.setTo(0.18*sx,0.2*sy);
@@ -144,6 +140,7 @@
 						console.log('Box1 height is '+box1.height);
 						console.log('Box1 width is '+box1.width);
 						
+						//create the blue rectangle
 						rec0 = game.add.sprite(0,0, 'bigBox');
 						//rec0.scale.setTo(1.25*sx,0.25*sy);
 						rec0.scale.setTo(0.755*sx,0.4*sy);
@@ -221,8 +218,7 @@
 							onPanel.create(panelCoordX[i], panelCoordY[i], objectname[i]);
 						}
 						
-						
-
+							//create the sequence/ pattern
 							onBox1.create(box1.x + box1.width/2 , box1.y + box1.height/2 , sequenceObj);
 							onBox2.create(box2.x +box2.width/2  , box2.y + box2.height/2 , sequenceObj);
 							onBox3.create(box3.x +box3.width/2  , box3.y + box3.height/2 , sequenceObj);
@@ -306,10 +302,7 @@
 					}
 						
 						
-						
-						
-				
-					
+
 					function onDragStop (sprite, pointer){
 
 						box6.frame = 0;
@@ -329,6 +322,8 @@
 						}
 						else if( onBox6.total ==1 && isInside(sprite,box6) ){
 							
+							// if something is dragged into box, check the condition and swap them
+							// otherwise set it back to the its location
 							swapWithBox6( sprite, onBox6.getChildAt(0) )
 							console.log("swap with Box6");
 						
@@ -369,18 +364,14 @@
 						if (isInside(sprite,box6)){
 							
 							box6.frame = 1;
-							//console.log("Drag the sprite. Overlapping8: true");
+							//console.log("Drag the sprite. Overlapping6: true");
 						}
 						
 						else if (!isInside(sprite,box6)){
 							box6.frame = 0;
-							//console.log( "Drag the sprite. Overlapping8: false");
+							//console.log( "Drag the sprite. Overlapping6: false");
 						}
-						
-
-						
-					
-						
+										
 									
 					}
 					
@@ -389,7 +380,10 @@
 						function swapWithBox6 (sprite, spriteInBox6 ){
 						
 							if (  onPanel.removeChild(sprite)  ){
-						
+								
+								//if the sprite can be remove from onpanel group
+								// add the sprite to box6 and add spriteInbox6 to onpanel 
+								// remove the first child in box6
 								onBox6.addChild(sprite);
 								onPanel.addChild(spriteInBox6);
 								onBox6.removeChild(spriteInBox6);

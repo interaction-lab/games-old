@@ -48,6 +48,7 @@
 				
 					// create a color class-object array 
 					// Each color has its properties, crystalString and boxColor(String) that have the same color
+					//shuffle the array later
 					var color =[ { crystalString: "object2", boxColor: "boxGreen"},
 										{ crystalString: "object3", boxColor: "boxOrange"},
 										{ crystalString: "object4", boxColor: "boxPink"}
@@ -173,8 +174,8 @@
 						onBox2 = game.add.group();
 						onBox3 = game.add.group();
 						
-						
-						
+						//set a string array called objectname and shuffle them
+						//it is used to generate/ create rock on panel
 						for (var i=0; i< SAME_COLOR_AMOUNT ; i++){
 							objectname[i] = "object2";
 							objectname[i+3] = "object3";

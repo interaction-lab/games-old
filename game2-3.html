@@ -47,6 +47,7 @@
 			
 					// create a color class-object array 
 					// Each color has its properties, rockString and boxColor(String) that have the same color
+					//shuffle the array later
 					var color =[ 	{ rockString: "object3", boxColor: "boxOrange"},
 										{ rockString: "object4", boxColor: "boxPink"},
 										{ rockString: "object5", boxColor: "boxBlue"}
@@ -173,7 +174,8 @@
 						onBox3 = game.add.group();
 						
 						
-						
+						//set a string array called objectname and shuffle them
+						//it is used to generate/ create rock on panel
 						for (var i=0; i< SAME_COLOR_AMOUNT ; i++){
 							objectname[i] = "object3";
 							objectname[i+3] = "object4";
@@ -183,6 +185,7 @@
 						
 						shuffle(objectname);
 						
+						//create the rock on panel
 						for (var i=0;i<ROCK_AMOUNT;i++){
 							//objectname = "object" + game.rnd.integerInRange(3,5);
 							panelCoordX[i] = controlPanel.x + 220*sx +(i%COLUMNS_PANEL) * 180 *sx;
@@ -217,7 +220,7 @@
 							object.anchor.setTo(0.5,0.5);
 							object.frame=0;
 							object.scale.setTo(0.25*sx);
-							object.originalPosition = object.position.clone();
+							//object.originalPosition = object.position.clone();
 							object.inputEnabled=true;
 							object.input.enableDrag(false,false,false,255,null,controlPanel);
 							object.events.onDragStart.add(onDragStart,this);
