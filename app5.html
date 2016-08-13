@@ -37,10 +37,12 @@
         var scoreText, promptText;
         var sx = window.innerWidth/gameWidth;
         var sy = window.innerHeight/gameHeight;
-        var batteryCoordX = new Array();
-        var batteryCoordY = new Array();
-        var panelCoordX = new Array();
-        var panelCoordY = new Array();
+		//create variable panel with two coordinates properties
+        var panel = {
+			CoordX : new Array(),
+			CoordY : new Array()
+		}
+					
         var logo;
         var controlPanel;
         var button;
@@ -121,6 +123,9 @@
             battery.x = controlPanel.x + controlPanel.width - battery.width - 200*sx;
             battery.y = controlPanel.y + controlPanel.height/2 - battery.height/2;
             battery.inputEnabled=true;
+			//Custom properties, CoordX and CoordY, added to object battery
+			battery.CoordX = new Array();
+			battery.CoordY = new Array();
 
             box = game.add.sprite(0,0,'box');
             box.frame = 1;
@@ -144,9 +149,9 @@
                 
                 //var object = objects.create(controlPanel.x+220*sx+(arr[i]%4)*150*sx,controlPanel.y+150*sy+Math.floor(arr[i]/4)*180*sy,objectname);
                 
-                panelCoordX[i] = controlPanel.x+220*sx+(i%COLUMNS_PANEL)*150*sx;
-                panelCoordY[i] = controlPanel.y+130*sy+Math.floor(i/COLUMNS_PANEL)*150*sy;
-                onPanel.create(panelCoordX[i], panelCoordY[i], objectname);
+                panel.CoordX[i] = controlPanel.x+220*sx+(i%COLUMNS_PANEL)*150*sx;
+                panel.CoordY[i] = controlPanel.y+130*sy+Math.floor(i/COLUMNS_PANEL)*150*sy;
+                onPanel.create(panel.CoordX[i], panel.CoordY[i], objectname);
             }
             
             batteryCoordinates();
@@ -208,8 +213,8 @@
         function batteryCoordinates() {
         	for (var i = 0; i < OBJECT_AMOUNT; i++)
         	{
-        		batteryCoordX[i] = controlPanel.x + 1205*sx + i%3*150*sx;
-        		batteryCoordY[i] = controlPanel.y + 300*sy + Math.floor(i/3)*145*sy;
+        		battery.CoordX[i] = controlPanel.x + battery.x +  20*sx + i%3* 120*sx;
+        		battery.CoordY[i] = controlPanel.y + battery.y + 100*sy + Math.floor(i/3)*145*sy;
         	}
 	}
 
@@ -230,7 +235,7 @@
         function onDragStop(sprite,pointer){
             sprite.frame=0;
             battery.frame = 0;
-            			if (isInside(sprite) && onPanel.removeChild(sprite))
+				if (isInside(sprite) && onPanel.removeChild(sprite))
 				{
 					onBattery.add(sprite);
 				}
@@ -243,15 +248,15 @@
 			//Reorders the objects on the Panel
 			for (var i = 0; i < onPanel.total; i++)
 			{
-				onPanel.getChildAt(i).x = panelCoordX[i];
-				onPanel.getChildAt(i).y = panelCoordY[i];
+				onPanel.getChildAt(i).x = panel.CoordX[i];
+				onPanel.getChildAt(i).y = panel.CoordY[i];
 			}
 			
 			//Reorders the objects on the Battery
 			for (var i = 0; i < onBattery.total; i++)
 			{
-				onBattery.getChildAt(i).x = batteryCoordX[i];
-				onBattery.getChildAt(i).y = batteryCoordY[i];
+				onBattery.getChildAt(i).x = battery.CoordX[i];
+				onBattery.getChildAt(i).y = battery.CoordY[i];
 			}
         }
 
@@ -274,11 +279,12 @@
             });
             scoreText.setText('Count: '+count);
             if (count==target){ 
-		alert('Yayy!'); 
-		onBattery.forEach(function(object){ object.input.draggable = false;} );
-		onPanel.forEach(function(object){ object.input.draggable = false;} );
-		
-		return true;}
+				alert('Yayy!'); 
+				onBattery.forEach(function(object){ object.input.draggable = false;} );
+				onPanel.forEach(function(object){ object.input.draggable = false;} );
+				
+				return true;
+			}
 
             else return false;
         }
