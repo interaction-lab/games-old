@@ -61,14 +61,12 @@
 					//set up a sequence array
 					var sequenceObj = new Array();
 					
-/*					var box1CoordX = new Array();
-					var box1CoordY = new Array();
-					var box2CoordX = new Array();
-					var box2CoordY = new Array();
-*/
 
-					var panelCoordX = new Array();
-					var panelCoordY = new Array();
+					//create variable panel with two coordinates properties
+					var panel = {
+						CoordX : new Array(),
+						CoordY : new Array()
+					}
 					
 
 					
@@ -190,8 +188,7 @@
 						console.log('Box2 height is '+box2.height);
 						console.log('Box2 width is '+box2.width);
 						
-						
-						
+
 						box5 = game.add.sprite(0,0, 'box');
 						box5.scale.setTo(0.18*sx,0.15*sy);
 						//box5.x = controlPanel.x + controlPanel.width  - 3*box5.width - 180*sx;
@@ -249,10 +246,10 @@
 						//generate each object on panel
 						for (var i=0;i< OBJECT_AMOUNT;i++){
 							//objectname = "object" + game.rnd.integerInRange(1,6);
-							panelCoordX[i] = controlPanel.x + 220*sx +(i%COLUMNS_PANEL) * 180*sx;
-							panelCoordY[i] = controlPanel.y + controlPanel.height/2 - 120*sy + Math.floor(i/COLUMNS_PANEL) * 100*sy;
+							panel.CoordX[i] = controlPanel.x + 220*sx +(i%COLUMNS_PANEL) * 180*sx;
+							panel.CoordY[i] = controlPanel.y + controlPanel.height/2 - 120*sy + Math.floor(i/COLUMNS_PANEL) * 100*sy;
 							
-							onPanel.create(panelCoordX[i], panelCoordY[i], objectname[i]);
+							onPanel.create(panel.CoordX[i], panel.CoordY[i], objectname[i]);
 						}
 						
 
@@ -483,8 +480,8 @@
 						//set the position of objects in thier corresponding box / panel
 						for (var i = 0; i < onPanel.total; i++)
 						{
-							onPanel.getChildAt(i).x = panelCoordX[i];
-							onPanel.getChildAt(i).y = panelCoordY[i];
+							onPanel.getChildAt(i).x = panel.CoordX[i];
+							onPanel.getChildAt(i).y = panel.CoordY[i];
 						}
 						
 						for (var i = 0; i < onBox2.total; i++)

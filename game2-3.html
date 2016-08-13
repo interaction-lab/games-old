@@ -55,14 +55,11 @@
 					
 					shuffle(color);
 					
-					var box1CoordX = new Array();
-					var box1CoordY = new Array();
-					var box2CoordX = new Array();
-					var box2CoordY = new Array();
-					var box3CoordX = new Array();
-					var box3CoordY = new Array();
-					var panelCoordX = new Array();
-					var panelCoordY = new Array();
+					//create variable panel with two coordinates properties
+					var panel = {
+						CoordX : new Array(),
+						CoordY : new Array()
+					}
 					
 					// keep track of the color count using array 
 					// index 0 ==> 1st color;
@@ -135,6 +132,10 @@
 						box1.x = controlPanel.x + controlPanel.width  - box1.width - 140*sx;
 						box1.y = controlPanel.y + controlPanel.height/3 - box1.height/3 - button.height - 50 *sx;
 						box1.frame = 0;
+						
+						//Custom properties, CoordX and CoordY, added to object box1
+						box1.CoordX = new Array();
+						box1.CoordY = new Array();
 						console.log('Box1 height is '+box1.height);
 						console.log('Box1 width is '+box1.width);
 						
@@ -144,6 +145,10 @@
 						box2.x = controlPanel.x + controlPanel.width  - box2.width - 140*sx;
 						box2.y = controlPanel.y + box1.y + 50*sx;
 						box2.frame = 0;
+						
+						//Custom properties, CoordX and CoordY, added to object box2
+						box2.CoordX = new Array();
+						box2.CoordY = new Array();
 						console.log('Box2 height is '+box2.height);
 						console.log('Box2 width is '+box2.width);
 						
@@ -153,6 +158,10 @@
 						box3.x = controlPanel.x + controlPanel.width  - box3.width - 140*sx;;
 						box3.y = controlPanel.y + box2.y+ 50*sx;
 						box3.frame = 0;
+						
+						//Custom properties, CoordX and CoordY, added to object box3
+						box3.CoordX = new Array();
+						box3.CoordY = new Array();
 						console.log('Box2 height is '+box3.height);
 						console.log('Box2 width is '+box3.width);
 						
@@ -188,15 +197,15 @@
 						//create the rock on panel
 						for (var i=0;i<ROCK_AMOUNT;i++){
 							//objectname = "object" + game.rnd.integerInRange(3,5);
-							panelCoordX[i] = controlPanel.x + 220*sx +(i%COLUMNS_PANEL) * 180 *sx;
-							panelCoordY[i] = controlPanel.y + controlPanel.height/2 - 120*sy + Math.floor(i/COLUMNS_PANEL) * 100*sy;
+							panel.CoordX[i] = controlPanel.x + 220*sx +(i%COLUMNS_PANEL) * 180 *sx;
+							panel.CoordY[i] = controlPanel.y + controlPanel.height/2 - 120*sy + Math.floor(i/COLUMNS_PANEL) * 100*sy;
 							
-							onPanel.create(panelCoordX[i], panelCoordY[i], objectname[i]);
+							onPanel.create(panel.CoordX[i], panel.CoordY[i], objectname[i]);
 						}
 						
-						boxCoordinates(box1CoordX, box1CoordY,box1);
-						boxCoordinates(box2CoordX, box2CoordY,box2);
-						boxCoordinates(box3CoordX, box3CoordY,box3);
+						boxCoordinates(box1.CoordX, box1.CoordY,box1);
+						boxCoordinates(box2.CoordX, box2.CoordY,box2);
+						boxCoordinates(box3.CoordX, box3.CoordY,box3);
 						
 						for (var i=0; i<onPanel.total ; i++){
 						
@@ -295,32 +304,28 @@
 						console.log("onPanel.total: " + onPanel.total + " onBox1.total: " + onBox1.total + " onBox2.total: " + onBox2.total + " onBox3.total: " + onBox3.total);
 						
 						
-						//onBox1.align(5, -1, 50, 50);
-						//onBox1.x = controlPanel.x + box1.width + 350* sx;
-						//onBox1.y = box1.height + 50*sy;
-						
 						for (var i = 0; i < onPanel.total; i++)
 						{
-							onPanel.getChildAt(i).x = panelCoordX[i];
-							onPanel.getChildAt(i).y = panelCoordY[i];
+							onPanel.getChildAt(i).x = panel.CoordX[i];
+							onPanel.getChildAt(i).y = panel.CoordY[i];
 						}
 						
 						for (var i = 0; i < onBox1.total; i++)
 						{
-							onBox1.getChildAt(i).x = box1CoordX[i];
-							onBox1.getChildAt(i).y = box1CoordY[i];
+							onBox1.getChildAt(i).x = box1.CoordX[i];
+							onBox1.getChildAt(i).y = box1.CoordY[i];
 						}
 						
 						for (var i = 0; i < onBox2.total; i++)
 						{
-							onBox2.getChildAt(i).x = box2CoordX[i];
-							onBox2.getChildAt(i).y = box2CoordY[i];
+							onBox2.getChildAt(i).x = box2.CoordX[i];
+							onBox2.getChildAt(i).y = box2.CoordY[i];
 						}
 						
 						for (var i = 0; i < onBox3.total; i++)
 						{
-							onBox3.getChildAt(i).x = box3CoordX[i];
-							onBox3.getChildAt(i).y = box3CoordY[i];
+							onBox3.getChildAt(i).x = box3.CoordX[i];
+							onBox3.getChildAt(i).y = box3.CoordY[i];
 						}
 
 						
@@ -373,8 +378,6 @@
 					
 					function checkColor(){
 						
-											
-							
 						//count the Number of the Y/P/LB color rocks in each box
 						for(var i = 0 ; i <onBox1.total ; i++){
 							
