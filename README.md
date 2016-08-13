@@ -40,18 +40,20 @@ game2-1.html
 
 game2-3.html 
 - sort color rocks into the empty boxes that match its color
+
 game3-1.html 
-
 - sort color crystals into the empty boxes without color
-game3-2.html 
 
+game3-2.html 
 - sort color crystals into the empty boxes that match its color
 
 Game2 Activity 3 - Organize by item
 game6-1.html - sort item into the empty box
 
 Game 2 Activity 4 - Copy the sequence
-game4-1-2.html - copy the sequence into the 4 empty boxes
+
+game4-1-2.html 
+- copy the sequence into the 4 empty boxes
 
 Game 2 Activity 5 - Complete the sequence
 
