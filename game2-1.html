@@ -53,17 +53,35 @@
 					// index 0 ==> 1st color (Orange);
 					// index 1 ==> 2nd color (Pink);
 					// index 2 ==> 3rd color (Light Blue)
+					
 					var countBox1Color = [0,0,0];
 
 					var countBox2Color = [0,0,0];
 
 					var countBox3Color = [0,0,0];
+					
 
 					//keep track of the color count after rocks are generated for the first time
 					// it is used to compare the number of same color rocks in the box
 					var numColor1 =0;//orange 
 					var numColor2 =0;//Pink
 					var numColor3 =0;// Light Blue
+					
+					/**
+						Note that numColor1/2/3 can be made into a panel property
+						var panel = { 
+						
+							CoordX : new Array(),
+							CoordY : new Array(),
+							
+							crystals : {
+								color0: 0,
+								color1: 0,
+								color2: 0,
+							}
+						}
+					
+					**/
 					
 					
 					function preload(){
@@ -118,6 +136,16 @@
 						//Custom properties, CoordX and CoordY, added to object box1
 						box1.CoordX = new Array();
 						box1.CoordY = new Array();
+						
+						/**
+						Note that countBox1Color[0,0,0] can be made into a box property
+						box1.crystal = {
+								CountColor0 : 0,
+								color1 : 0,
+								color2 : 0,
+							}
+					
+						**/
 						
 						console.log('Box1 height is '+box1.height);
 						console.log('Box1 width is '+box1.width);

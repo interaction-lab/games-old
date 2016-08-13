@@ -60,14 +60,11 @@
 					//set up a sequence array
 					var sequenceObj = "object" + game.rnd.integerInRange(1,6);
 					
-					
-/*					var box1CoordX = new Array();
-					var box1CoordY = new Array();
-					var box2CoordX = new Array();
-					var box2CoordY = new Array();
-*/
-					var panelCoordX = new Array();
-					var panelCoordY = new Array();
+					//create variable panel with two coordinates properties
+					var panel = {
+						CoordX : new Array(),
+						CoordY : new Array()
+					}
 					
 
 					function preload(){
@@ -195,9 +192,6 @@
 						console.log('Box2 height is '+box2.height);
 						console.log('Box2 width is '+box2.width);
 						
-				
-
-						
 
 						onPanel = game.add.group();
 						onBox1 = game.add.group();
@@ -212,10 +206,10 @@
 						//generate each object on panel
 						for (var i=0;i< OBJECT_AMOUNT;i++){
 							//objectname = "object" + game.rnd.integerInRange(1,6);
-							panelCoordX[i] = controlPanel.x  + controlPanel.width/2 - 400*sx +(i%COLUMNS_PANEL) * 180*sx;
-							panelCoordY[i] = controlPanel.y + controlPanel.height/2  + Math.floor(i/COLUMNS_PANEL) * 140*sy;
+							panel.CoordX[i] = controlPanel.x  + controlPanel.width/2 - 400*sx +(i%COLUMNS_PANEL) * 180*sx;
+							panel.CoordY[i] = controlPanel.y + controlPanel.height/2  + Math.floor(i/COLUMNS_PANEL) * 140*sy;
 							
-							onPanel.create(panelCoordX[i], panelCoordY[i], objectname[i]);
+							onPanel.create(panel.CoordX[i], panel.CoordY[i], objectname[i]);
 						}
 						
 							//create the sequence/ pattern
@@ -345,8 +339,8 @@
 						
 						for (var i = 0; i < onPanel.total; i++)
 						{
-							onPanel.getChildAt(i).x = panelCoordX[i];
-							onPanel.getChildAt(i).y = panelCoordY[i];
+							onPanel.getChildAt(i).x = panel.CoordX[i];
+							onPanel.getChildAt(i).y = panel.CoordY[i];
 						}
 						
 						
