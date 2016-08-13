@@ -7,6 +7,7 @@ index.html
 - Create box and panel group
 - Set up coordinates in the box and panel
 - Rearrange object position after they are being drag
+- read index.html_about.txt
 
 Game 1 Activity 2 - Charge Spaceship
 app5.html
@@ -49,5 +50,19 @@ game5-1.html - generate a sequence with 1 type of object and 1 empty slot
 game5-2.html - generate a sequence with 2 type of object and 2 empty slot
 game5-3.html - generate a sequence with 3 type of object and 3 empty slot
 
+
+Note:
+https://draeton.github.io/stitches/
+- To create spritesheet for images
+
+Phaser game engine/framework
+- Preload and Create functions are written under window.onload function
+
+Preload function 
+- Load all images / scale the game 
+Create function 
+- Add sprite to image 
+- Enable input of sprite
+- Add event like onDragStart, onDragStop, onDragUpdate, onButtonPress, onButtonRelease
 
 
