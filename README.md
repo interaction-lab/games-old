@@ -34,10 +34,15 @@ app6.html
 - Space pets return to its original position if they are not dragged into the right spot
 
 Game 2 Activity 2 - Organize by color 
-game2-1.html - sort color rocks into the empty boxes without color
-game2-3.html - sort color rocks into the empty boxes that match its color
-game3-1.html - sort color crystals into the empty boxes without color
-game3-2.html - sort color crystals into the empty boxes that match its color
+
+game2-1.html 
+- sort color rocks into the empty boxes without color
+game2-3.html 
+- sort color rocks into the empty boxes that match its color
+game3-1.html 
+- sort color crystals into the empty boxes without color
+game3-2.html 
+- sort color crystals into the empty boxes that match its color
 
 Game2 Activity 3 - Organize by item
 game6-1.html - sort item into the empty box
@@ -60,6 +65,7 @@ Phaser game engine/framework
 
 Preload function 
 - Load all images / scale the game 
+
 Create function 
 - Add sprite to image 
 - Enable input of sprite
