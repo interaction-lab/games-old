@@ -1,0 +1,18 @@
+﻿index.html
+
+index.html combines the PACK_MOONROCKS activity 1 already in index.html with the CHARGE_SPACESHIP activity 2 from app5.html
+
+NOTE:
+The variable name changes below: 
+Goal is the rectangle that frames the target number.
+Box is the either the rectangle (activity 1) where the moon rocks or battery where the crystals (activity 2) are moved to.
+
+var activity, initially 0,  is used to keep track of the current activity.
+
+Using a switch that checks against activity we are able to run the code pertaining to the current activity.
+
+
+Things that may need changing:
+the way the value of activity is changing. Currently in  changeActivity, activity increments by 1 ( activity++). 
+may want to move the code from the changeActivity function into the create function and delete the changeActivity function.
+may want to use Phasere's physics properies to make use of a sprite overlapping function.

@@ -6,7 +6,8 @@
         <script src="//cdn.jsdelivr.net/phaser/2.5.0/phaser.min.js"></script>
         <script type="text/javascript" src="http://cdn.robotwebtools.org/EventEmitter2/current/eventemitter2.min.js"></script>
         <script type="text/javascript" src="http://cdn.robotwebtools.org/roslibjs/current/roslib.min.js"></script>
-        <style>
+        <script src="angular.min.js"></script>
+		<style>
         body{
             width: 100%;
             height: 100%;
@@ -15,39 +16,55 @@
         }
         </style>
     </head>
-    <body>
-
-    <script type="text/javascript">
+    <body ng-app>    
+	<script type="text/javascript">
     
     const ROCK_AMOUNT = 10;
-    const COLUMNS_PANEL = 4;
-    const COLUMNS_BOX = 4;
-
+	const CRYSTAL_AMOUNT = 10;
+    
+	const COLUMNS_PANEL = 4;
+    const COLUMNS_BOX = 3;
+	
+	const PATH_TO_ASSETS='assets/';
+	
+	const MIN_OBJECTS = 1;
+	const MAX_OBJECTS = 2;//for quick debugging/testing (should be set to 10)
+	
+	const GAME1ACTIVITIES = 6; // amount of activites in Game 1
+	
+	// the activites in Game 1:
+	const PACK_MOONROCKS = 1;
+	const CHARGE_SPACESHIP = 2; // app5.html
+	const SELECT_GALAXY = 3;
+	const SELECT_PLANET = 4;
+	const FEED_SPACE_PETS = 5; // app2.html
+	const BOARD_SPACE_PETS = 1; // game 2, activity 1
+	
+	
     window.onload = function() {
-    	
+    	var activity = 0;
         var gameWidth = 1920;
         var gameHeight = 1080;
         var game = new Phaser.Game(window.innerWidth, window.innerHeight, Phaser.AUTO, '', { preload: preload, create: create,  render:render });
-  
-	
-		var onPanel;
-		var onBox;
-        var box;
-		var logo;
-		var button;
-		var controlPanel;
-        var count=0;
-        var scoreText;
-        var promptText;
-        var target,attempts=1,stat=false;
+		var onPanel; // used as a phaser group to group the objects while on the panel
+		var onBox; // used as a phaser group to group the objects while on the box
+        var box; // where objects are places to reach target
+		var goal; // a box where the target is displayed
+		var background;
+		var controlPanel;//= game.add.sprite(0,0,null);
+		var button;//= game.add.sprite(controlPanel.x+controlPanel.width/2,controlPanel.y+controlPanel.height-200,null);
+        var scoreText; // the current amount of objects in the box
+        var promptText; // the target amount desired 
+        var target = game.rnd.integerInRange(MIN_OBJECTS,MAX_OBJECTS); // Number of objects needed to be in box randomly generated
+		var attempts=1, stat=false;
         var sx = window.innerWidth/gameWidth;
         var sy = window.innerHeight/gameHeight;
+        var boxCoordX = new Array(); // for alining the objects on the box
+        var boxCoordY = new Array();
+        var panelCoordX = new Array(); // for alining the objects on the panel
+        var panelCoordY = new Array();
 
-        var panel = {
-						CoordX : new Array(),
-						CoordY : new Array()
-					}
-
+		// *** ROS ***
         var ros = new ROSLIB.Ros({
             //url : 'ws://localhost:9090'
             url : 'ws://192.168.7.191:9090'
@@ -65,29 +82,12 @@
             messageType : 'sar_robot_command_msgs/RobotCommand' 
         });
 
+		
+		// *** Phaser ***
         function preload () {
-
-            var path_to_assets='assets/';
-
-	//logo is the background image 
-	//control panel is the area where moonrocks are located
-
-            game.load.image('logo', 'assets/Background/ShipInterior.png');
-            game.load.image('controlPanel',path_to_assets+'Items/ControlPanelcrop.png');
-
-            game.load.spritesheet('object1',path_to_assets+'Items/Rocks/Moonrock1_sheet.png',610,400,2);
-            game.load.spritesheet('object2',path_to_assets+'Items/Rocks/Moonrock2_sheet.png',460,360,2);
-            game.load.spritesheet('object3',path_to_assets+'Items/Rocks/Moonrock3_sheet.png',660,360,2);
-            game.load.spritesheet('object4',path_to_assets+'Items/Rocks/Moonrock4_sheet.png',510,410,2);
-            game.load.spritesheet('object5',path_to_assets+'Items/Rocks/Moonrock5_sheet.png',660,360,2);
-            game.load.spritesheet('button',path_to_assets+'Items/Button_sheet.png',288,288,2);
-            game.load.spritesheet('box',path_to_assets+'Items/Box_sheet.png',881,730,2);
-/*
-            game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
-            game.scale.updateLayout();
-*/
-
-
+			initailizeVariables();
+			loadAllSprites();
+			
             window.addEventListener('resize', function(event){resizeGame();});
             var resizeGame = function () { game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;  game.scale.updateLayout();}
 
@@ -102,9 +102,6 @@
             ros.on('close', function() {
                 console.log('Connection to websocket server closed.');
             });
-
-// Number of moonrocks needed to be in box randomly generated
-            target = game.rnd.integerInRange(1,10);
 
             var log_start = new ROSLIB.Message({
                 header: {
@@ -131,246 +128,305 @@
             do_start.properties = 'Put '+target+' moon rocks into the box.';
             robot_command.publish(do_start);
         }
-
-
+		
         function create () {
 		
-// background image is displayed
-            logo = game.add.sprite(game.world.centerX, game.world.centerY, 'logo');
-//  Moves the image anchor to the middle, so it centers inside the game properly
-            logo.anchor.setTo(0.5, 0.5);
-            console.log('Game width is'+ game.width);
-            console.log('Game height is'+ game.height);
-
-// controlPanel where moonrock located image is created on screen
-            controlPanel = game.add.sprite(0,0,'controlPanel');
-            controlPanel.scale.setTo(0.8*sx,0.8*sy);
-            controlPanel.x = game.world.centerX - controlPanel.width/2;
-            controlPanel.y = game.world.centerY - controlPanel.height/2;
-
-
-//button image is loaded
-            button = game.add.sprite(controlPanel.x+controlPanel.width/2,controlPanel.y+controlPanel.height-200,'button');
-            button.scale.setTo(0.3);
-            button.x = controlPanel.x+controlPanel.width/2-button.width/2;
-            button.y = controlPanel.y+controlPanel.height-button.height-0.05*game.height;
-//button frame 
-            button.frame=0;
-//Enables all kind of input actions on this image (click, etc)
-            button.inputEnabled=true;
-//onButtonPress function
-            button.events.onInputDown.add(onButtonPress,this);
-            button.events.onInputUp.add(onButtonRelease,this);
-
-            box = game.add.sprite(0,0, 'box');
-            box.scale.setTo(0.6*sx,0.8*sy);
-            box.x = controlPanel.x + controlPanel.width - box.width - 130*sx;
-            box.y = controlPanel.y + 80*sx;
-            box.inputEnabled=true;
-            box.frame = 0;
-			
-			//Custom properties, CoordX and CoordY, added to object box1
-			box.CoordX = new Array();
-			box.CoordY = new Array();
-
-            console.log('Box height is '+box.height);
-            console.log('Box width is '+box.width);
-
-            console.log('cp width and height are '+controlPanel.width+'x'+controlPanel.height);
-
-			onPanel=game.add.group();
-			onBox=game.add.group();
-
-			
-		for (var i=0;i<ROCK_AMOUNT;i++){
-		
-                objectname = "object" + game.rnd.integerInRange(1,5);
-				panel.CoordX[i] = controlPanel.x+220*sx+(i%COLUMNS_PANEL)*150*sx;
-				panel.CoordY[i] = controlPanel.y+130*sy+Math.floor(i/COLUMNS_PANEL)*150*sy;
-				
-				onPanel.create(panel.CoordX[i], panel.CoordY[i], objectname);
+			changeActivity();
 		}
 		
-		// set the rocks coordinate/ position in the box
-		boxCoordinates();
+		function update(){
 
-            onPanel.forEach(function(object){
-                object.anchor.setTo(0.5,0.5);
-                object.frame=0;
-                object.scale.setTo(0.25*sx);
-				//object.originalPosition = object.position.clone();
-				//object.alignIn(controlPanel, Phaser.BOTTOM_LEFT, -20, -20);
-                object.inputEnabled=true;
-                object.input.enableDrag(false,false,false,255,null,controlPanel);
-				//object.input.enableSnap(130 *sx,150 *sy,false,true);
-                object.events.onDragStart.add(onDragStart,this);
-                object.events.onDragStop.add(onDragStop,this);
-                object.events.onDragUpdate.add(onDragUpdate,this);
-                
-            });
+		}
 
-		
-            scoreText = game.add.text(game.width/2,0.1*game.height,'Count: 0',{fontSize:'24px',fill:'#000'});
-            scoreText.x=game.width/2-scoreText.width/2;
-
-            promptText = game.add.text(game.width/2,0.03*game.height,'Please move moonrocks into the box',{fontSize:'24px',fill:'#fff'});
-            promptText.x = game.width/2-promptText.width/2;
-            var question = 'Please move ' + target + ' moonrocks into the box';
-            promptText.setText(question);
-
-
+		function render(){
+			//game.debug.spriteBounds(button);
+    		//game.debug.spriteCorners(button, true, true);
+			//game.debug.inputInfo(32, 32);
+    		
+    		//game.debug.pointer( game.input.activePointer );
+			//game.debug.spriteInputInfo(box, 32, 130);
         }
-        
+		
+		
+		// *** Our Functions ***
         function boxCoordinates() {
-        	for (var i = 0; i < ROCK_AMOUNT; i++)
-			{
-				box.CoordX[i] = controlPanel.x + 960*sx + i%3*150*sx;
-				box.CoordY[i] = controlPanel.y + 160*sy + Math.floor(i/3)*100*sy;
+			switch (activity) {
+				case PACK_MOONROCKS:
+					for (var i = 0; i < ROCK_AMOUNT; i++)
+					{
+						boxCoordX[i] = controlPanel.x + 960*sx + i%3*150*sx;
+						boxCoordY[i] = controlPanel.y + 160*sy + Math.floor(i/COLUMNS_BOX)*100*sy;
+					}
+					break;
+				case CHARGE_SPACESHIP:
+					for (var i = 0; i < CRYSTAL_AMOUNT; i++)
+					{
+						boxCoordX[i] = controlPanel.x + box.x+20*sx + i%3*120*sx;
+						boxCoordY[i] = controlPanel.y + box.y+100*sy + Math.floor(i/COLUMNS_BOX)*100*sy;
+					}
+					break;
+				default:
 			}
 		}
 
-        function outOfBox(sprite){
-            sprite.loadTexture('box');
-        }
-
         function onButtonPress(sprite,pointer){
-            sprite.frame=1;
-            stat = countRocks();
-            if (!stat[0]) attempts++;
+			switch (activity) {
+				case PACK_MOONROCKS:
+					sprite.frame=1;
+					stat = messageOnObjectCount();
+					if (!stat[0]) attempts++;
 
-            var log_complete = new ROSLIB.Message({
-                header: {
-                    frame_id: '1'
-                },
-                message_type : "Activity Completed",
-                activity_name : "MoveByName",
-                target: target,
-                attempts: attempts,
-                status: stat[0]
-            });
-            activity_status.publish(log_complete);
+					var log_complete = new ROSLIB.Message({
+						header: {
+							frame_id: '1'
+						},
+						message_type : "Activity Completed",
+						activity_name : "MoveByName",
+						target: target,
+						attempts: attempts,
+						status: stat[0]
+					});
+					activity_status.publish(log_complete);
 
-            var do_complete = new ROSLIB.Message({
-                header: {
-                    frame_id: '1'
-                },
-                command: 2
-            });
+					var do_complete = new ROSLIB.Message({
+						header: {
+							frame_id: '1'
+						},
+						command: 2
+					});
 
-            if (stat[0]){
-                do_complete.id = "Congrat_"+game.rnd.integerInRange(1,6)+"_EN";
-                do_complete.properties = "Great job!";
-            }
-            else {
-                if (stat[1] == 'less') {
-                    do_complete.id = "too-few-"+game.rnd.integerInRange(1,3)+"_EN";
-                    do_complete.properties = "Do we need more?";
-                }
-                else if (stat[1] == 'more') {
-                    do_complete.id = "too-many-"+game.rnd.integerInRange(1,3)+"_EN";
-                    do_complete.properties = "Is that too many?";
-                }
-            }
-            robot_command.publish(do_complete);
+					if (stat[0]){
+						do_complete.id = "Congrat_"+game.rnd.integerInRange(1,6)+"_EN";
+						do_complete.properties = "Great job!";
+					}
+					else {
+						if (stat[1] == 'less') {
+							do_complete.id = "too-few-"+game.rnd.integerInRange(1,3)+"_EN";
+							do_complete.properties = "Do we need more?";
+						}
+						else if (stat[1] == 'more') {
+							do_complete.id = "too-many-"+game.rnd.integerInRange(1,3)+"_EN";
+							do_complete.properties = "Is that too many?";
+						}
+					}
+					robot_command.publish(do_complete);
+					
+					// condition for changing game
+					if (onBox.total==target){
+						changeActivity(); 
+					}
+					break;
+					
+				case CHARGE_SPACESHIP:
+					sprite.frame=1;
+					stat = messageOnObjectCount();
+					if (!stat[0]) attempts++;
+
+					var log_complete = new ROSLIB.Message({
+						header: {
+							frame_id: '1'
+						},
+						message_type : "Activity Completed",
+						activity_name : "MoveByName",
+						target: target,
+						attempts: attempts,
+						status: stat[0]
+					});
+					activity_status.publish(log_complete);
+
+					var do_complete = new ROSLIB.Message({
+						header: {
+							frame_id: '1'
+						},
+						command: 2
+					});
+
+					if (stat[0]){
+						do_complete.id = "Congrat_"+game.rnd.integerInRange(1,6)+"_EN";
+						do_complete.properties = "Great job!";
+					}
+					else {
+						if (stat[1] == 'less') {
+							do_complete.id = "too-few-"+game.rnd.integerInRange(1,3)+"_EN";
+							do_complete.properties = "Do we need more?";
+						}
+						else if (stat[1] == 'more') {
+							do_complete.id = "too-many-"+game.rnd.integerInRange(1,3)+"_EN";
+							do_complete.properties = "Is that too many?";
+						}
+					}
+					robot_command.publish(do_complete);
+					
+					// condition for changing game
+					if (onBox.total==target){
+						changeActivity(); 
+					}
+					break;
+				default:
+			}
         }
 
         function onButtonRelease(sprite,pointer){
-            sprite.frame=0;
+			switch(activity){
+				case PACK_MOONROCKS:
+					sprite.frame=0;
+					break;
+				case CHARGE_SPACESHIP:
+					sprite.frame=0;
+					break;
+				default:
+			}
         }
 
         function onDragStart(sprite,pointer){
-            sprite.frame=1;
+			switch(activity){
+				case PACK_MOONROCKS:
+					sprite.frame=1;
+					break;
+				case CHARGE_SPACESHIP:
+					sprite.frame=1;
+					break;
+				default:
+			}
         }
 
         function onDragStop(sprite,pointer){
-            sprite.frame=0;
-            box.frame = 0;
-            			
-            	if (isInside(sprite) && onPanel.removeChild(sprite))
-				{
-					onBox.add(sprite);
-				}
-				else if (!isInside(sprite) && onBox.removeChild(sprite))
-				{
-					onPanel.add(sprite);
-				}
-				console.log("onPanel.total: " + onPanel.total + " onBox.total: " + onBox.total);
-			
-			//Reorders the rocks on the Panel
-			for (var i = 0; i < onPanel.total; i++)
-			{
-				onPanel.getChildAt(i).x = panel.CoordX[i];
-				onPanel.getChildAt(i).y = panel.CoordY[i];
+			switch(activity){
+				case PACK_MOONROCKS:
+					sprite.frame=0;
+					box.frame = 0;
+					
+					// moves the object between groups					
+					if (isInside(sprite) && onPanel.removeChild(sprite))
+					{
+						onBox.add(sprite);
+					}
+					else if (!isInside(sprite) && onBox.removeChild(sprite))
+					{
+						onPanel.add(sprite);
+					}
+					
+					// Reorders the object(s) on the Panel
+					for (var i = 0; i < onPanel.total; i++)
+					{
+						onPanel.getChildAt(i).x = panelCoordX[i];
+						onPanel.getChildAt(i).y = panelCoordY[i];
+					}
+					// Reorders the object(s) on the Box
+					for (var i = 0; i < onBox.total; i++)
+					{
+						onBox.getChildAt(i).x = boxCoordX[i];
+						onBox.getChildAt(i).y = boxCoordY[i];
+					}
+					break;
+					
+				case CHARGE_SPACESHIP:
+					//console.log("inside onDragStop - Crystals");// for debugging
+					sprite.frame=0;
+					box.frame = 0;
+					
+					// moves the object between groups
+					if (isInside(sprite) && onPanel.removeChild(sprite))
+					{
+						onBox.add(sprite);
+					}
+					else if (!isInside(sprite) && onBox.removeChild(sprite))
+					{
+						onPanel.add(sprite);
+					}
+					
+					//Reorders the object(s) on the Panel
+					for (var i = 0; i < onPanel.total; i++)
+					{
+						onPanel.getChildAt(i).x = panelCoordX[i];
+						onPanel.getChildAt(i).y = panelCoordY[i];
+					}
+					//Reorders the object(s) on the Box
+					for (var i = 0; i < onBox.total; i++)
+					{
+						onBox.getChildAt(i).x = boxCoordX[i];
+						onBox.getChildAt(i).y = boxCoordY[i];
+					}
+					break;
 			}
-			
-			//Reorders the rocks on the Box
-			for (var i = 0; i < onBox.total; i++)
-			{
-				onBox.getChildAt(i).x = box.CoordX[i];
-				onBox.getChildAt(i).y = box.CoordY[i];
-			}
-
-
         }
 
         function onDragUpdate(sprite,pointer){
-            if (isInside(sprite)) box.frame = 1;
-            else if (!isInside(sprite)){
-				box.frame = 0;
-		
+			switch(activity){
+				case PACK_MOONROCKS:
+					if (isInside(sprite)) box.frame = 1;
+					else if (!isInside(sprite)){
+						box.frame = 0;	
+					}
+					break;
+				case CHARGE_SPACESHIP:
+					if (isInside(sprite)) box.frame = 1;
+					else if (!isInside(sprite)){
+						box.frame = 0;	
+					}
+					break;
+				default:
+			}
+            
+        }
+
+        function isInside(object){//,box){ // might need this parameter (especially for activities from game 2)
+			switch(activity){
+				case PACK_MOONROCKS:
+					if (object.x > box.x+0.01*game.width && object.y > (box.y +0.01*game.height) && object.x < box.x+box.width-0.01*game.width && object.y < box.y+box.height-0.01*game.height) return true;
+					else return false;
+					break;
+				case CHARGE_SPACESHIP:
+					if (object.x > box.x+0.01*game.width && object.y > (box.y +0.01*game.height) && object.x < box.x+box.width-0.01*game.width && object.y < box.y+box.height-0.01*game.height) return true;
+					else return false;
+					break;
+				default:
 			}
         }
-
-        
-
-
-
-
-        function isInside(object){
-            if (object.x > box.x+0.01*game.width && object.y > (box.y +0.01*game.height) && object.x < box.x+box.width-0.01*game.width && object.y < box.y+box.height-0.01*game.height) return true;
-            else return false;
+		
+        function messageOnObjectCount(){
+            switch(activity){
+				case PACK_MOONROCKS:
+					// updates the count displayed when the button is hit
+					scoreText.setText('Count: '+onBox.total);
+					scoreText.x = game.width/2-scoreText.width/2;
+					scoreText.y = 0.1*game.height;
+					
+					// returns a ros message
+					if (onBox.total==target){
+						//return [true, ""];
+						alert('Well done!'); 				
+						return true;
+					}
+					else {
+						return [false,(onBox.total<target)?"less":"more"];
+					}
+					break;
+				case CHARGE_SPACESHIP:
+					// updates the count displayed when the button is hit
+					scoreText.setText('Count: '+onBox.total);
+					scoreText.x = game.width/2-scoreText.width/2;
+					scoreText.y = 0.05*game.height;
+					
+					// returns a ros message
+					if (onBox.total==target){
+						//return [true, ""];
+						alert('Well done!'); 				
+						return true;
+					}
+					else {
+						return [false,(onBox.total<target)?"less":"more"];
+					}
+					break;
+				default:
+			}
+			
+			
         }
 
-        function countRocks(){
-            //count = 0;
-			//make use of total properties of onBox group
-            count = onBox.total;
-            console.log("Count in box! : " + onBox.total);
-            
-/*            onBox.forEach(function(object){
-                if (isInside(object)){
-                    console.log("Dropped inside the box!");
-                    count++;
-                }
-            });
-            
-*/
-            scoreText.setText('Count: '+count);
-            if (count==target){
-		//return [true, ""];
-		alert('Well done!'); 
-		//disable the drag properties
-		onBox.forEach(function(object){object.input.draggable = false;});
-		onPanel.forEach(function(object){object.input.draggable = false;});
-		//game.input.mouse.enabled = false;
-		return true;}
-
-            else return [false,(count<target)?"less":"more"];
-
+		function reset(){
+	   
         }
-	function update(){
-
-	}
-
-	function render(){
-	
-     }
-
-       function reset(){
-
-
-        }
-
 
         function shuffle(array) {
             //Using the Fisher-Yates (Knuth) Shuffle algorithm
@@ -384,12 +440,236 @@
             }
             return array;
         }
+		
+		function addPropertiesToObjects(){
+			switch (activity) {
+				case PACK_MOONROCKS:
+					onPanel.forEach(function(object){
+						object.anchor.setTo(0.5,0.5);
+						object.frame=0;
+						object.scale.setTo(0.25*sx);
+						object.originalPosition = object.position.clone();
+						object.inputEnabled=true;
+						object.input.enableDrag(false,false,false,255,null,controlPanel);
+						object.input.enableSnap(130 *sx,150 *sy,false,true);
+						object.events.onDragStart.add(onDragStart,this);
+						object.events.onDragStop.add(onDragStop,this);
+						object.events.onDragUpdate.add(onDragUpdate,this);
+					});
+					break;
+					
+				case CHARGE_SPACESHIP:
+					onPanel.forEach(function(object){
+						object.anchor.setTo(0.5,0.5);
+						object.frame=0;
+						object.scale.setTo(0.35*sx);
+						object.inputEnabled=true;
+						object.input.enableDrag(false,false,false,255,null,controlPanel);
+						object.events.onDragStart.add(onDragStart,this);
+						object.events.onDragStop.add(onDragStop,this);
+						object.events.onDragUpdate.add(onDragUpdate,this);
+						object.input.enableSnap(100*sx,100*sy,false,true);
+					});
+					break;
+			}
+		}
 
+		function loadAllSprites() {
+			game.load.image('controlPanel',PATH_TO_ASSETS+'Items/ControlPanelcrop.png');
+			game.load.image('background', 'assets/Background/ShipInterior.png');
+			game.load.spritesheet('button',PATH_TO_ASSETS+'Items/Button_sheet.png',288,288,2);
+		
+			game.load.spritesheet('box',PATH_TO_ASSETS+'Items/Box_sheet.png',881,730,2);
+			game.load.spritesheet('battery',PATH_TO_ASSETS+'Items/Battery_sheet.png',560,810,2);
+			
+			game.load.spritesheet('moonrock1',PATH_TO_ASSETS+'Items/Rocks/Moonrock1_sheet.png',610,400,2);
+			game.load.spritesheet('moonrock2',PATH_TO_ASSETS+'Items/Rocks/Moonrock2_sheet.png',460,360,2);
+			game.load.spritesheet('moonrock3',PATH_TO_ASSETS+'Items/Rocks/Moonrock3_sheet.png',660,360,2);
+			game.load.spritesheet('moonrock4',PATH_TO_ASSETS+'Items/Rocks/Moonrock4_sheet.png',510,410,2);
+			game.load.spritesheet('moonrock5',PATH_TO_ASSETS+'Items/Rocks/Moonrock5_sheet.png',660,360,2);
 
+			game.load.spritesheet('crystal1',PATH_TO_ASSETS+'Items/Crystals/Crystal1_sheet.png',460,560,2);
+			game.load.spritesheet('crystal2',PATH_TO_ASSETS+'Items/Crystals/Crystal2_sheet.png',460,510,2);
+			game.load.spritesheet('crystal3',PATH_TO_ASSETS+'Items/Crystals/Crystal3_sheet.png',410,460,2);
+			game.load.spritesheet('crystal4',PATH_TO_ASSETS+'Items/Crystals/Crystal4_sheet.png',460,410,2);
+			game.load.spritesheet('crystal5',PATH_TO_ASSETS+'Items/Crystals/Crystal5_sheet.png',410,360,2);
+			
+			
+		}
+		
+		function changeSprites(){
+			switch(activity){
+				case PACK_MOONROCKS:
+					background.loadTexture('background');
+					background.anchor.setTo(0.5,0.5);
+					background.x = game.world.centerX;
+					background.y = game.world.centerY;
 
+					// controlPanel where moonrock located image is created on screen
+					controlPanel = game.add.sprite(0,0,'controlPanel');
+					//controlPanel.loadTexture('controlPanel');
+					controlPanel.scale.setTo(0.8*sx,0.8*sy);
+					controlPanel.x = game.world.centerX - controlPanel.width/2;
+					controlPanel.y = game.world.centerY - controlPanel.height/2;
+					
+					// button image is loaded
+					button = game.add.sprite(controlPanel.x+controlPanel.width/2,controlPanel.y+controlPanel.height-200,'button');
+					button.scale.setTo(0.3);
+					button.x = controlPanel.x+controlPanel.width/2-button.width/2;
+					button.y = controlPanel.y+controlPanel.height-button.height-0.05*game.height;
+					button.frame=0;// button frame 
+					button.inputEnabled=true;// Enables all kind of input actions on this image (click, etc)
+					button.events.onInputDown.add(onButtonPress,this);
+					button.events.onInputUp.add(onButtonRelease,this);
+					
+					// box where moonrocks are moved to
+					box = game.add.sprite(0,0, 'box');
+					box.scale.setTo(0.6*sx,0.8*sy);
+					box.x = controlPanel.x + controlPanel.width - box.width - 130*sx;
+					box.y = controlPanel.y + 80*sx;
+					box.inputEnabled=true;
+					box.frame = 0;
+					
+					// creating the groups to sort the moonrocks
+					onPanel=game.add.group();
+					onBox=game.add.group();
+					
+					for (var i=0;i<ROCK_AMOUNT;i++){
+						objectname = "moonrock" + game.rnd.integerInRange(1,5);
+						panelCoordX[i] = controlPanel.x+220*sx+(i%COLUMNS_PANEL)*150*sx;
+						panelCoordY[i] = controlPanel.y+130*sy+Math.floor(i/COLUMNS_PANEL)*150*sy;
+						
+						onPanel.create(panelCoordX[i], panelCoordY[i], objectname);
+					}
+					break;
+					
+				case CHARGE_SPACESHIP:
+					background.loadTexture('background');
+					background.anchor.setTo(0.5,0.5);
+					background.x = game.world.centerX;
+					background.y = game.world.centerY;
+					
+					controlPanel.loadTexture('controlPanel');
+					controlPanel.scale.setTo(0.95*sx,0.95*sy);
+					controlPanel.x = game.world.centerX - controlPanel.width/2;
+					controlPanel.y = game.world.centerY - controlPanel.height/2;
+					controlPanel.visible = true;
+					
+					button.loadTexture('button');
+					button.scale.setTo(0.4*sx);
+					button.scaleMin = 0.3;
+					button.x = controlPanel.x+controlPanel.width/2-button.width/2;
+					button.y = controlPanel.y+controlPanel.height-button.height-0.1*game.height;
+					button.frame=0;
+					button.visible = true;
+					button.inputEnabled=true;
+					button.events.onInputDown.add(onButtonPress,this);
+					button.events.onInputUp.add(onButtonRelease,this);
+					
+					
+					// rectangle where the target number is displayed
+					goal = game.add.sprite(0,0,'box');
+					goal.frame = 1;
+					goal.scale.setTo(0.2*sx,0.25*sy);
+					goal.x = controlPanel.x + controlPanel.width/2 - goal.width/2;
+					goal.y = controlPanel.y + controlPanel.height/5 - goal.height/2;
+	
+					// battery tray
+					box.loadTexture('battery');
+					box.visible = true;
+					box.frame = 0;
+					box.scale.setTo(0.8*sx,0.85*sy);
+					box.x = controlPanel.x + controlPanel.width - box.width - 200*sx;
+					box.y = controlPanel.y + controlPanel.height/2 - box.height/2;
+					
+					for (var i=0;i<CRYSTAL_AMOUNT;i++){
+						objectname = "crystal" + game.rnd.integerInRange(1,5);
+						panelCoordX[i] = controlPanel.x+220*sx+(i%COLUMNS_PANEL)*150*sx;
+						panelCoordY[i] = controlPanel.y+130*sy+Math.floor(i/COLUMNS_PANEL)*150*sy;
+						onPanel.create(panelCoordX[i], panelCoordY[i], objectname);
+					}
+					break;
+				default:
+			}
+		}
+		
+		function clearActivity(){// clears or resets sprites, variables, groups, and text
+			onPanel.removeAll(true,true,false);
+			onBox.removeAll(true,true,false);
+			box.kill();
+			controlPanel.kill();
+			button.kill();
+			scoreText.setText('');
+			promptText.setText('');
+			attempts=1;
+			stat=false;
+			boxCoordX = [];
+			boxCoordY = [];
+			panelCoordX = [];
+			panelCoordY = [];
+		}
+		
+		function initailizeVariables(){
+			onPanel = game.add.group(); 
+			onBox = game.add.group();   
+			
+			background = game.add.sprite(game.world.centerX, game.world.centerY, null);
+			controlPanel = game.add.sprite(0,0,null);
+			button = game.add.sprite(controlPanel.x+controlPanel.width/2,controlPanel.y+controlPanel.height-200,null);
+			box = game.add.sprite(game.world.centerX, game.world.centerY, null);
+			goal = game.add.sprite(game.world.centerX, game.world.centerY, null);
+        
+			scoreText = game.add.text(game.width/2,0.1*game.height,'Count: 0',{fontSize:'24px',fill:'#000'});
+            scoreText.x = game.width/2-scoreText.width/2;
+			
+            promptText = game.add.text(game.width/2,0.03*game.height,'Please move moonrocks into the box',{fontSize:'24px',fill:'#fff'});
+			promptText.x = game.width/2-promptText.width/2;
+		}
+		
+		function changeActivity(){
+			activity++;
+			
+			//######################################
+			//for testing the switching back to the PACK_MOONROCKS activity
+			//delete/change this line when adding the otehr activities
+			if (activity == CHARGE_SPACESHIP+1) activity = PACK_MOONROCKS; //for debugging
+			//######################################
+			
+			if (activity > GAME1ACTIVITIES){
+				activity = PACK_MOONROCKS;
+			}
+		
+			clearActivity();
+			
+			switch(activity){
+				case PACK_MOONROCKS:
+					changeSprites();
+					boxCoordinates();
+					addPropertiesToObjects();
+					
+					target = game.rnd.integerInRange(MIN_OBJECTS,MAX_OBJECTS);
+					
+					promptText = game.add.text(game.width/2,0.03*game.height,'Please move ' + target + ' moonrocks into the box',{fontSize:'24px',fill:'#fff'});
+					promptText.x = game.width/2-promptText.width/2;
+					
+					break;
+					
+				case CHARGE_SPACESHIP:
+					changeSprites();
+					boxCoordinates();
+					addPropertiesToObjects();
+					
+					target = game.rnd.integerInRange(MIN_OBJECTS,MAX_OBJECTS);
+					
+					fontSize = 100*sx;
+					promptText = game.add.text(goal.x+goal.width/2,goal.y+goal.height/2,target,{fontSize:fontSize+'px',fill:'#fff'});
+					promptText.anchor.setTo(0.5,0.5);
+					break;
+					
+				default:
+			}
+		}
     };
-
     </script>
-
     </body>
 </html>
